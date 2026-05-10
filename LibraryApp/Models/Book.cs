@@ -25,5 +25,10 @@ namespace LibraryApp.Models
         public string? Description { get; set; }
         public string? Publisher { get; set; }
         public int? YearPublished { get; set; }
+
+        // Navigation properties
+        public ICollection<BorrowTransaction> BorrowTransactions { get; set; } = new List<BorrowTransaction>();
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
+
     }
 }
