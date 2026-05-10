@@ -7,23 +7,23 @@ namespace LibraryApp.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Full name is required.")]
-        [StringLength(150)]
+        [StringLength(150, ErrorMessage = "Name cannot exceed 150 characters.")]
         public string FullName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Invalid email address.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = string.Empty;
 
-        [Phone(ErrorMessage = "Invalid phone number.")]
+        [Phone(ErrorMessage = "Please enter a valid phone number.")]
         public string? Phone { get; set; }
 
+        [StringLength(300, ErrorMessage = "Address cannot exceed 300 characters.")]
         public string? Address { get; set; }
 
         public DateTime MembershipDate { get; set; } = DateTime.Now;
-
         public DateTime? MembershipExpiry { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Status is required.")]
         public string Status { get; set; } = "Active";
 
         // Navigation properties

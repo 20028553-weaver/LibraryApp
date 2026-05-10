@@ -15,37 +15,58 @@ namespace LibraryApp.Data
         public DbSet<Penalty> Penalties { get; set; }
         public DbSet<LibraryProfile> LibraryProfiles { get; set; }
         public DbSet<BorrowingConfig> BorrowingConfigs { get; set; }
+        public DbSet<Genre> Genres { get; set; }
+        public DbSet<BookGenre> BookGenres { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            // Book ↔ Genre (many-to-many) — composite primary key
+            modelBuilder.Entity<BookGenre>()
+                .HasKey(bg => new { bg.BookId, bg.GenreId });
+
+            modelBuilder.Entity<BookGenre>()
+                .HasOne(bg => bg.Book)
+                .WithMany(b => b.BookGenres)
+                .HasForeignKey(bg => bg.BookId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<BookGenre>()
+                .HasOne(bg => bg.Genre)
+                .WithMany(g => g.BookGenres)
+                .HasForeignKey(bg => bg.GenreId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             // Book → BorrowTransaction (one to many)
             modelBuilder.Entity<BorrowTransaction>()
                 .HasOne(b => b.Book)
                 .WithMany(b => b.BorrowTransactions)
-                .HasForeignKey(b => b.BookId);
+                .HasForeignKey(b => b.BookId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Member → BorrowTransaction (one to many)
             modelBuilder.Entity<BorrowTransaction>()
                 .HasOne(b => b.Member)
                 .WithMany(m => m.BorrowTransactions)
-                .HasForeignKey(b => b.MemberId);
+                .HasForeignKey(b => b.MemberId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Admin → BorrowTransaction (one to many)
             modelBuilder.Entity<BorrowTransaction>()
                 .HasOne(b => b.Admin)
                 .WithMany(a => a.BorrowTransactions)
-                .HasForeignKey(b => b.AdminId);
+                .HasForeignKey(b => b.AdminId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // BorrowTransaction → Penalty (one to one)
             modelBuilder.Entity<Penalty>()
                 .HasOne(p => p.BorrowTransaction)
                 .WithOne(b => b.Penalty)
-                .HasForeignKey<Penalty>(p => p.BorrowTransactionId);
+                .HasForeignKey<Penalty>(p => p.BorrowTransactionId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Member → Penalty (one to many)
-            // NoAction breaks the multiple-cascade-path: Member→BorrowTransaction→Penalty and Member→Penalty
             modelBuilder.Entity<Penalty>()
                 .HasOne(p => p.Member)
                 .WithMany(m => m.Penalties)
@@ -56,13 +77,15 @@ namespace LibraryApp.Data
             modelBuilder.Entity<Reservation>()
                 .HasOne(r => r.Book)
                 .WithMany(b => b.Reservations)
-                .HasForeignKey(r => r.BookId);
+                .HasForeignKey(r => r.BookId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Member → Reservation (one to many)
             modelBuilder.Entity<Reservation>()
                 .HasOne(r => r.Member)
                 .WithMany(m => m.Reservations)
-                .HasForeignKey(r => r.MemberId);
+                .HasForeignKey(r => r.MemberId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Decimal precision
             modelBuilder.Entity<BorrowingConfig>()
