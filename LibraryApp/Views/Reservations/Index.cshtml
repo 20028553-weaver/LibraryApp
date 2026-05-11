@@ -1,59 +1,77 @@
 @model IEnumerable<LibraryApp.Models.Reservation>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Reservations";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Reservations</h2>
+    <a href="/Reservations/Reserve" class="btn btn-primary">New Reservation</a>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ReservedDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ExpiryDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Book)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Member)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ReservedDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ExpiryDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Book.Author)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Member.Email)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No reservations yet.</div>
 }
-    </tbody>
-</table>
+else
+{
+    <table class="table table-bordered table-hover bg-white">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Book</th>
+                <th>Member</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.Id</td>
+                    <td>@r.Book?.Title</td>
+                    <td>@r.Member?.FullName</td>
+                    <td>
+                        @if (r.Status == "Pending")
+                        {
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        }
+                        else if (r.Status == "Fulfilled")
+                        {
+                            <span class="badge bg-success">Fulfilled</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@r.Status</span>
+                        }
+                    </td>
+                    <td>
+                        @if (r.Status == "Pending")
+                        {
+                            <form method="post"
+                                  action="/Reservations/Fulfil/@r.Id"
+                                  style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-sm btn-success"
+                                        onclick="return confirm('Fulfil?')">
+                                    Fulfil
+                                </button>
+                            </form>
+                            <form method="post"
+                                  action="/Reservations/Cancel/@r.Id"
+                                  style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger ms-1"
+                                        onclick="return confirm('Cancel?')">
+                                    Cancel
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

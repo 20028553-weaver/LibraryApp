@@ -1,65 +1,62 @@
 @model IEnumerable<LibraryApp.Models.Penalty>
-
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Penalties";
 }
 
-<h1>Index</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Penalties</h2>
+    <form method="post" action="/Penalties/GenerateAll">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-warning" onclick="return confirm('Generate penalties for all overdue books?')">
+            Generate All Penalties
+        </button>
+    </form>
+</div>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Amount)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateIssued)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DatePaid)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.BorrowTransaction)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Member)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Amount)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateIssued)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DatePaid)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.BorrowTransaction.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Member.Email)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+@if (!Model.Any())
+{
+    <div class="alert alert-success">No penalties on record.</div>
 }
-    </tbody>
-</table>
+else
+{
+    <table class="table table-bordered table-hover bg-white">
+        <thead class="table-dark">
+            <tr><th>#</th><th>Member</th><th>Book</th><th>Amount</th><th>Date Issued</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@p.Member?.FullName</td>
+                    <td>@p.BorrowTransaction?.Book?.Title</td>
+                    <td class="@(p.Status == "Paid" ? "text-success" : "text-danger") fw-bold">
+                        $@p.Amount.ToString("F2")
+                    </td>
+                    <td>@p.DateIssued.ToString("dd MMM yyyy")</td>
+                    <td>
+                        @if (p.Status == "Paid")
+                        {
+                            <span class="badge bg-success">Paid</span>
+                        }
+                        else
+                        {
+
+                            <span class="badge bg-danger">Unpaid</span>
+                        }
+                    </td>
+                    <td>
+                        @if (p.Status != "Paid")
+                        {
+                            <form method="post" action="/Penalties/MarkPaid/@p.Id" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Mark as paid?')">Mark Paid</button>
+                            </form>
+                        }
+                        <a href="/Penalties/Edit/@p.Id" class="btn btn-sm btn-outline-secondary ms-1">Edit</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

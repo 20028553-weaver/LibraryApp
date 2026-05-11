@@ -1,84 +1,45 @@
 @model LibraryApp.Models.Book
-
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = Model.Title;
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>Book</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Author)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Author)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ISBN)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ISBN)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CoverImagePath)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CoverImagePath)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsAvailable)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsAvailable)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TotalCopies)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TotalCopies)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AvailableCopies)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.AvailableCopies)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateAdded)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateAdded)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Publisher)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Publisher)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.YearPublished)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.YearPublished)
-        </dd>
-    </dl>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>@Model.Title</h2>
+    <div>
+        <a href="/Books/Edit/@Model.Id" class="btn btn-outline-primary">Edit</a>
+        <a href="/Books" class="btn btn-secondary ms-2">Back</a>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+<div class="card p-4 mb-3">
+    <dl class="row">
+        <dt class="col-sm-3">Author</dt>
+        <dd class="col-sm-9">@Model.Author</dd>
+        <dt class="col-sm-3">ISBN</dt>
+        <dd class="col-sm-9">@Model.ISBN</dd>
+        <dt class="col-sm-3">Publisher</dt>
+        <dd class="col-sm-9">@(Model.Publisher ?? "—")</dd>
+        <dt class="col-sm-3">Year</dt>
+        <dd class="col-sm-9">@(Model.YearPublished?.ToString() ?? "—")</dd>
+        <dt class="col-sm-3">Total Copies</dt>
+        <dd class="col-sm-9">@Model.TotalCopies</dd>
+        <dt class="col-sm-3">Available</dt>
+        <dd class="col-sm-9">
+            @if (Model.IsAvailable && Model.AvailableCopies > 0)
+            {
+                <span class="badge bg-success">@Model.AvailableCopies available</span>
+            }
+            else
+            {
+
+                <span class="badge bg-danger">All copies borrowed</span>
+            }
+        </dd>
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@Model.Description</dd>
+        }
+    </dl>
+    <a href="/BorrowTransactions/Borrow" class="btn btn-primary">Issue This Book</a>
 </div>

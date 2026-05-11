@@ -1,69 +1,41 @@
 @model LibraryApp.Models.BorrowTransaction
-
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Edit Transaction";
 }
 
-<h1>Edit</h1>
-
-<h4>BorrowTransaction</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="BookId" class="control-label"></label>
-                <select asp-for="BookId" class="form-control" asp-items="ViewBag.BookId"></select>
-                <span asp-validation-for="BookId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="MemberId" class="control-label"></label>
-                <select asp-for="MemberId" class="form-control" asp-items="ViewBag.MemberId"></select>
-                <span asp-validation-for="MemberId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="AdminId" class="control-label"></label>
-                <select asp-for="AdminId" class="form-control" asp-items="ViewBag.AdminId"></select>
-                <span asp-validation-for="AdminId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="BorrowDate" class="control-label"></label>
-                <input asp-for="BorrowDate" class="form-control" />
-                <span asp-validation-for="BorrowDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DueDate" class="control-label"></label>
-                <input asp-for="DueDate" class="form-control" />
-                <span asp-validation-for="DueDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ReturnDate" class="control-label"></label>
-                <input asp-for="ReturnDate" class="form-control" />
-                <span asp-validation-for="ReturnDate" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RenewCount" class="control-label"></label>
-                <input asp-for="RenewCount" class="form-control" />
-                <span asp-validation-for="RenewCount" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <input asp-for="Status" class="form-control" />
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
+<h2 class="mb-4">Edit Transaction #@Model.Id</h2>
+<div class="card p-4" style="max-width:600px;">
+    <form method="post" action="/BorrowTransactions/Edit/@Model.Id">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div class="mb-3">
+            <label asp-for="BookId" class="form-label">Book</label>
+            <select asp-for="BookId" asp-items="ViewBag.BookId" class="form-select"></select>
+        </div>
+        <div class="mb-3">
+            <label asp-for="MemberId" class="form-label">Member</label>
+            <select asp-for="MemberId" asp-items="ViewBag.MemberId" class="form-select"></select>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Status" class="form-label">Status</label>
+            <select asp-for="Status" class="form-select">
+                <option>Borrowed</option>
+                <option>Returned</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label asp-for="DueDate" class="form-label">Due Date</label>
+            <input asp-for="DueDate" type="datetime-local" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="ReturnDate" class="form-label">Return Date</label>
+            <input asp-for="ReturnDate" type="datetime-local" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="RenewCount" class="form-label">Renew Count</label>
+            <input asp-for="RenewCount" type="number" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/BorrowTransactions" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
 </div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}

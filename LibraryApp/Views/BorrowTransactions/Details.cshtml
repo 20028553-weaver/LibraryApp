@@ -1,66 +1,64 @@
 @model LibraryApp.Models.BorrowTransaction
-
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Transaction Details";
+    bool overdue = Model.ReturnDate == null && Model.DueDate < DateTime.Now && Model.Status == "Borrowed";
 }
 
-<h1>Details</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Transaction #@Model.Id</h2>
+    <a href="/BorrowTransactions" class="btn btn-secondary">Back</a>
+</div>
 
-<div>
-    <h4>BorrowTransaction</h4>
-    <hr />
+<div class="card p-4 mb-3">
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.BorrowDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.BorrowDate)
+        <dt class="col-sm-3">Book</dt>
+        <dd class="col-sm-9">@Model.Book?.Title <span class="text-muted small">by @Model.Book?.Author</span></dd>
+        <dt class="col-sm-3">Member</dt>
+        <dd class="col-sm-9">@Model.Member?.FullName <span class="text-muted small">(@Model.Member?.Email)</span></dd>
+        <dt class="col-sm-3">Borrow Date</dt>
+        <dd class="col-sm-9">@Model.BorrowDate.ToString("dd MMMM yyyy")</dd>
+        <dt class="col-sm-3">Due Date</dt>
+        <dd class="col-sm-9 @(overdue ? "text-danger fw-bold" : "")">
+            @Model.DueDate.ToString("dd MMMM yyyy")
+            @if (overdue)
+            {
+                <span class="badge bg-danger ms-2">@((int)(DateTime.Now - Model.DueDate).TotalDays) days overdue</span>
+            }
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DueDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DueDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ReturnDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ReturnDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.RenewCount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.RenewCount)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Book)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Book.Author)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Member)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Member.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Admin)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Admin.Email)
+        <dt class="col-sm-3">Return Date</dt>
+        <dd class="col-sm-9">@(Model.ReturnDate.HasValue ? Model.ReturnDate.Value.ToString("dd MMMM yyyy") : "Not returned yet")</dd>
+        <dt class="col-sm-3">Renewals</dt>
+        <dd class="col-sm-9">@Model.RenewCount</dd>
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            @if (overdue)
+            {
+                <span class="badge bg-danger">Overdue</span>
+            }
+            else if (Model.Status == "Borrowed")
+            {
+
+                <span class="badge bg-warning text-dark">Borrowed</span>
+            }
+            else
+            {
+
+                <span class="badge bg-success">Returned</span>
+            }
         </dd>
     </dl>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+@if (Model.ReturnDate == null && Model.Status == "Borrowed")
+{
+    <form method="post" action="/BorrowTransactions/Return/@Model.Id" style="display:inline;">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-success" onclick="return confirm('Return this book?')">Return Book</button>
+    </form>
+    <form method="post" action="/BorrowTransactions/Renew/@Model.Id" style="display:inline;">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-outline-primary ms-2" onclick="return confirm('Renew?')">Renew</button>
+    </form>
+}
+<a href="/BorrowTransactions/Edit/@Model.Id" class="btn btn-outline-secondary ms-2">Edit</a>
+<a href="/BorrowTransactions/Delete/@Model.Id" class="btn btn-outline-danger ms-2">Delete</a>

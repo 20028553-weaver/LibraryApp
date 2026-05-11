@@ -1,0 +1,68 @@
+﻿@model IEnumerable<LibraryApp.Models.BorrowTransaction>
+@{
+    ViewData["Title"] = "Overdue Books";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-danger">Overdue Books (@Model.Count())</h2>
+    <div>
+        <form method="post" action="/Penalties/GenerateAll" style="display:inline;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-warning"
+                    onclick="return confirm('Generate penalties?')">
+                Generate All Penalties
+            </button>
+        </form>
+        <a href="/BorrowTransactions" class="btn btn-secondary ms-2">Back</a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-success">No overdue books!</div>
+}
+else
+{
+    <table class="table table-bordered table-hover bg-white">
+        <thead class="table-dark">
+            <tr>
+                <th>Book</th>
+                <th>Member</th>
+                <th>Due Date</th>
+                <th>Days Overdue</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in Model.OrderBy(x => x.DueDate))
+            {
+                <tr class="table-danger">
+                    <td>@t.Book?.Title</td>
+                    <td>@t.Member?.FullName</td>
+                    <td><strong>@t.DueDate.ToString("dd MMM yyyy")</strong></td>
+                    <td>
+                        <span class="badge bg-danger">
+                            @((int)(DateTime.Now - t.DueDate).TotalDays) days
+                        </span>
+                    </td>
+                    <td>
+                        <form method="post"
+                              action="/BorrowTransactions/Return/@t.Id"
+                              style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-sm btn-success"
+                                    onclick="return confirm('Return?')">
+                                Return
+                            </button>
+                        </form>
+                        <a href="/BorrowTransactions/Details/@t.Id"
+                               class="btn btn-sm btn-outline-secondary ms-1">
+                            View
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

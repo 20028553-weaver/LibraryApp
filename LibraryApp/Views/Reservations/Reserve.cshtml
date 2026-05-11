@@ -1,0 +1,25 @@
+﻿@model LibraryApp.Models.Reservation
+@{
+    ViewData["Title"] = "Reserve a Book";
+}
+
+<h2 class="mb-4">Reserve a Book</h2>
+<div class="card p-4" style="max-width:500px;">
+    <form method="post" action="/Reservations/Reserve">
+        @Html.AntiForgeryToken()
+        <div class="mb-3">
+            <label asp-for="BookId" class="form-label">Book (Unavailable Only)</label>
+            <select asp-for="BookId" asp-items="ViewBag.BookId" class="form-select">
+                <option value="">— Select book —</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label asp-for="MemberId" class="form-label">Member</label>
+            <select asp-for="MemberId" asp-items="ViewBag.MemberId" class="form-select">
+                <option value="">— Select member —</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Place Reservation</button>
+        <a href="/Reservations" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
+</div>

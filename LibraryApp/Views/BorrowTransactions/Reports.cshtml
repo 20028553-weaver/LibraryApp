@@ -1,0 +1,71 @@
+﻿@{
+    ViewData["Title"] = "Reports";
+    var popularBooks = ViewBag.PopularBooks as IEnumerable<dynamic>;
+    int overdueCount = ViewBag.OverdueCount ?? 0;
+    int activeBorrows = ViewBag.ActiveBorrows ?? 0;
+    int thisMonth = ViewBag.ThisMonthCount ?? 0;
+    decimal unpaid = ViewBag.UnpaidPenalties ?? 0m;
+}
+
+<h2 class="mb-4">Library Reports</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h3 class="text-primary">@activeBorrows</h3>
+            <small class="text-muted">Active Borrows</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h3 class="text-danger">@overdueCount</h3>
+            <small class="text-muted">Overdue</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h3 class="text-success">@thisMonth</h3>
+            <small class="text-muted">Borrowed This Month</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <h3 class="text-danger">$@unpaid.ToString("F2")</h3>
+            <small class="text-muted">Unpaid Penalties</small>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3 mb-3">
+    <h5>Most Borrowed Books</h5>
+    @if (popularBooks != null && popularBooks.Any())
+    {
+        <table class="table table-sm">
+            <thead><tr><th>Rank</th><th>Book</th><th>Times Borrowed</th></tr></thead>
+            <tbody>
+                @{
+                    int rank = 1;
+                }
+                @foreach (var b in popularBooks)
+                {
+                    <tr>
+                        <td>@rank</td>
+                        <td>@b.Title</td>
+                        <td><span class="badge bg-primary">@b.Count</span></td>
+                    </tr>
+                    rank++;
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="text-muted">No borrowing data yet.</p>
+    }
+</div>
+
+<div class="d-flex gap-2">
+    <a href="/BorrowTransactions/Overdue" class="btn btn-outline-danger">View Overdue (@overdueCount)</a>
+    <a href="/Penalties" class="btn btn-outline-warning">View Penalties</a>
+    <a href="/BorrowTransactions/Borrow" class="btn btn-primary">Issue New Book</a>
+</div>

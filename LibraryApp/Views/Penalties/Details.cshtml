@@ -1,54 +1,49 @@
 @model LibraryApp.Models.Penalty
-
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Penalty Details";
 }
 
-<h1>Details</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Penalty #@Model.Id</h2>
+    <a href="/Penalties" class="btn btn-secondary">Back</a>
+</div>
 
-<div>
-    <h4>Penalty</h4>
-    <hr />
+<div class="card p-4" style="max-width:500px;">
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Amount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Amount)
+        <dt class="col-sm-4">Member</dt>
+        <dd class="col-sm-8">@Model.Member?.FullName</dd>
+        <dt class="col-sm-4">Book</dt>
+        <dd class="col-sm-8">@Model.BorrowTransaction?.Book?.Title</dd>
+        <dt class="col-sm-4">Amount</dt>
+        <dd class="col-sm-8 fw-bold @(Model.Status == "Paid" ? "text-success" : "text-danger")">
+            $@Model.Amount.ToString("F2")
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DateIssued)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DateIssued)
+        <dt class="col-sm-4">Date Issued</dt>
+        <dd class="col-sm-8">@Model.DateIssued.ToString("dd MMM yyyy")</dd>
+        <dt class="col-sm-4">Date Paid</dt>
+        <dd class="col-sm-8">
+            @(Model.DatePaid.HasValue ? Model.DatePaid.Value.ToString("dd MMM yyyy") : "Not paid yet")
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DatePaid)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DatePaid)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.BorrowTransaction)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.BorrowTransaction.Id)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Member)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Member.Email)
+        <dt class="col-sm-4">Status</dt>
+        <dd class="col-sm-8">
+            @if (Model.Status == "Paid")
+            {
+                <span class="badge bg-success">Paid</span>
+            }
+            else
+            {
+
+                <span class="badge bg-danger">Unpaid</span>
+            }
         </dd>
     </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    @if (Model.Status != "Paid")
+    {
+        <form method="post" action="/Penalties/MarkPaid/@Model.Id">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-success" onclick="return confirm('Mark as paid?')">
+                Mark as Paid
+            </button>
+        </form>
+    }
 </div>

@@ -1,0 +1,53 @@
+﻿@model LibraryApp.Models.BorrowTransaction
+@{
+    ViewData["Title"] = "Issue Book";
+}
+
+<h2 class="mb-4">Issue a Book</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <form method="post" action="/BorrowTransactions/Borrow">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label class="form-label">Book (Available Only)</label>
+                    <select asp-for="BookId" asp-items="ViewBag.BookId" class="form-select">
+                        <option value="">-- Select book --</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Member</label>
+                    <select asp-for="MemberId" asp-items="ViewBag.MemberId" class="form-select">
+                        <option value="">-- Select member --</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Processed By</label>
+                    <select asp-for="AdminId" asp-items="ViewBag.AdminId" class="form-select">
+                        <option value="">-- Select admin --</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Issue Book</button>
+                <a href="/BorrowTransactions" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+    @{
+        var config = ViewBag.Config as LibraryApp.Models.BorrowingConfig;
+    }
+    @if (config != null)
+    {
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h6 class="fw-bold">Borrowing Rules</h6>
+                <ul class="list-unstyled small">
+                    <li><strong>Loan Duration:</strong> @config.LoanDurationDays days</li>
+                    <li><strong>Max Books:</strong> @config.MaxItemsPerMember</li>
+                    <li><strong>Max Renewals:</strong> @config.MaxRenewals</li>
+                    <li><strong>Daily Fine:</strong> $@config.DailyPenalty</li>
+                </ul>
+            </div>
+        </div>
+    }
+</div>
