@@ -1,0 +1,84 @@
+@model LibraryApp.Models.BorrowTransaction
+@{
+    ViewData["Title"] = "Issue Book";
+    var config = ViewBag.Config as LibraryApp.Models.BorrowingConfig;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-arrow-right-circle"></i> Issue a Book</h2>
+    <a href="/BorrowTransactions" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card p-4 shadow-sm">
+            <form asp-action="IssueBook" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="MemberId" class="form-label fw-semibold">Member</label>
+                    <select asp-for="MemberId" asp-items="ViewBag.MemberId" class="form-select">
+                        <option value="">-- Select member --</option>
+                    </select>
+                    <span asp-validation-for="MemberId" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="BookId" class="form-label fw-semibold">Book <span class="text-muted small">(available only)</span></label>
+                    <select asp-for="BookId" asp-items="ViewBag.BookId" class="form-select">
+                        <option value="">-- Select book --</option>
+                    </select>
+                    <span asp-validation-for="BookId" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="AdminId" class="form-label fw-semibold">Processed By <span class="text-muted small">(optional)</span></label>
+                    <select asp-for="AdminId" asp-items="ViewBag.AdminId" class="form-select">
+                        <option value="">-- Select admin --</option>
+                    </select>
+                </div>
+
+                @if (config != null)
+                {
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        Due date will be set to <strong>@config.LoanDurationDays days</strong> from today
+                        (@DateTime.Now.AddDays(config.LoanDurationDays).ToString("dd MMM yyyy")).
+                    </div>
+                }
+
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Issue Book
+                    </button>
+                    <a href="/BorrowTransactions" class="btn btn-outline-secondary ms-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (config != null)
+    {
+        <div class="col-md-4">
+            <div class="card p-3 shadow-sm">
+                <h6 class="fw-bold mb-3"><i class="bi bi-sliders"></i> Borrowing Rules</h6>
+                <ul class="list-unstyled small">
+                    <li class="mb-1"><i class="bi bi-calendar-check text-primary"></i> <strong>Loan Duration:</strong> @config.LoanDurationDays days</li>
+                    <li class="mb-1"><i class="bi bi-stack text-primary"></i> <strong>Max Books/Member:</strong> @config.MaxItemsPerMember</li>
+                    <li class="mb-1"><i class="bi bi-arrow-repeat text-primary"></i> <strong>Max Renewals:</strong> @config.MaxRenewals</li>
+                    <li class="mb-1"><i class="bi bi-currency-dollar text-danger"></i> <strong>Daily Fine:</strong> $@config.DailyPenalty</li>
+                    @if (config.GracePeriodDays > 0)
+                    {
+                        <li class="mb-1"><i class="bi bi-shield-check text-success"></i> <strong>Grace Period:</strong> @config.GracePeriodDays days</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

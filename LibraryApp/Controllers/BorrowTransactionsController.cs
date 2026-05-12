@@ -168,6 +168,75 @@ namespace LibraryApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // GET: BorrowTransactions/Overdue
+        public async Task<IActionResult> Overdue()
+        {
+            var overdue = await _context.BorrowTransactions
+                .Include(b => b.Book)
+                .Include(b => b.Member)
+                .Where(b => b.DueDate < DateTime.Today && b.ReturnDate == null)
+                .ToListAsync();
+            return View(overdue);
+        }
+
+        // GET: BorrowTransactions/IssueBook
+        public async Task<IActionResult> IssueBook()
+        {
+            var config = await _context.BorrowingConfigs.FirstOrDefaultAsync();
+            ViewBag.BookId = new SelectList(
+                _context.Books.Where(b => b.AvailableCopies > 0),
+                "Id", "Title");
+            ViewBag.MemberId = new SelectList(
+                _context.Members.Where(m => m.Status == "Active"),
+                "Id", "FullName");
+            ViewBag.AdminId = new SelectList(_context.Admins, "Id", "FullName");
+            ViewBag.Config = config;
+            return View();
+        }
+
+        // POST: BorrowTransactions/IssueBook
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> IssueBook([Bind("BookId,MemberId,AdminId")] BorrowTransaction borrowTransaction)
+        {
+            var config = await _context.BorrowingConfigs.FirstOrDefaultAsync();
+            var book = await _context.Books.FindAsync(borrowTransaction.BookId);
+
+            if (book == null || book.AvailableCopies <= 0)
+            {
+                TempData["Error"] = "Selected book is not available.";
+                ViewBag.BookId = new SelectList(_context.Books.Where(b => b.AvailableCopies > 0), "Id", "Title");
+                ViewBag.MemberId = new SelectList(_context.Members.Where(m => m.Status == "Active"), "Id", "FullName");
+                ViewBag.AdminId = new SelectList(_context.Admins, "Id", "FullName");
+                ViewBag.Config = config;
+                return View(borrowTransaction);
+            }
+
+            if (ModelState.IsValid)
+            {
+                var loanDays = config?.LoanDurationDays ?? 14;
+                borrowTransaction.BorrowDate = DateTime.Now;
+                borrowTransaction.DueDate = DateTime.Now.AddDays(loanDays);
+                borrowTransaction.Status = "Borrowed";
+                borrowTransaction.RenewCount = 0;
+
+                book.AvailableCopies--;
+                if (book.AvailableCopies == 0)
+                    book.IsAvailable = false;
+
+                _context.Add(borrowTransaction);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"'{book.Title}' has been issued successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.BookId = new SelectList(_context.Books.Where(b => b.AvailableCopies > 0), "Id", "Title", borrowTransaction.BookId);
+            ViewBag.MemberId = new SelectList(_context.Members.Where(m => m.Status == "Active"), "Id", "FullName", borrowTransaction.MemberId);
+            ViewBag.AdminId = new SelectList(_context.Admins, "Id", "FullName", borrowTransaction.AdminId);
+            ViewBag.Config = config;
+            return View(borrowTransaction);
+        }
+
         private bool BorrowTransactionExists(int id)
         {
             return _context.BorrowTransactions.Any(e => e.Id == id);
