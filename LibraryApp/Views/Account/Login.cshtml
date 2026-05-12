@@ -1,14 +1,16 @@
-﻿@{
+@{
     ViewData["Title"] = "Login";
 }
 
 <div class="row justify-content-center mt-5">
     <div class="col-md-4">
-        <div class="card p-4">
-            <h3 class="text-center mb-4">
+        <div class="card p-4 shadow-sm">
+            <h3 class="text-center mb-1">
                 <i class="bi bi-book-half"></i> LibraryApp
             </h3>
-            <form method="post" action="/Account/Login">
+            <p class="text-center text-muted mb-4">Sign in to your account</p>
+
+            <form method="post" asp-action="Login">
                 @Html.AntiForgeryToken()
                 <div class="mb-3">
                     <label class="form-label">Email</label>
@@ -26,17 +28,12 @@
                     <i class="bi bi-box-arrow-in-right"></i> Login
                 </button>
             </form>
+
             <hr />
-            <div class="text-center small text-muted">
-                <p>
-                    <strong>Admin login:</strong><br />
-                    admin@library.com / admin123
-                </p>
-                <p>
-                    <strong>Member login:</strong><br />
-                    john@email.com / member123
-                </p>
-            </div>
+            <p class="text-center mb-0">
+                Don't have an account?
+                <a asp-action="Register">Create one here</a>
+            </p>
         </div>
     </div>
 </div>
