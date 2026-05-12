@@ -32,6 +32,28 @@
                     <li class="nav-item"><a class="nav-link" href="/Reservations"><i class="bi bi-bookmark"></i> Reservations</a></li>
                     <li class="nav-item"><a class="nav-link" href="/Penalties"><i class="bi bi-exclamation-triangle"></i> Penalties</a></li>
                     <li class="nav-item"><a class="nav-link" href="/BorrowingConfigs"><i class="bi bi-sliders"></i> Config</a></li>
+                    @if (Context.Session.GetString("UserEmail") != null)
+                    {
+                        <li class="nav-item">
+                            <span class="nav-link text-light">
+                                <i class="bi bi-person-circle"></i>
+                                @Context.Session.GetString("UserEmail")
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-warning" href="/Account/Logout">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Account/Login">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
+                        </li>
+                    }
                 </ul>
             </div>
         </div>
@@ -60,4 +82,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-</html>
+</html> 

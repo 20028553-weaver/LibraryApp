@@ -24,9 +24,8 @@ namespace LibraryApp.Models
 
         public string Status { get; set; } = "Borrowed";
 
-        // Navigation properties
-        public Book Book { get; set; } = null!;
-        public Member Member { get; set; } = null!;
+        public Book? Book { get; set; }
+        public Member? Member { get; set; }
         public Admin? Admin { get; set; }
         public Penalty? Penalty { get; set; }
     }
