@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "PowerShell(sqlcmd *)",
-      "PowerShell(netsh advfirewall *)"
+      "PowerShell(netsh advfirewall *)",
+      "PowerShell(dotnet build *)"
     ]
   }
 }

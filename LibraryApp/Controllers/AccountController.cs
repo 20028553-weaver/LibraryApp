@@ -28,6 +28,9 @@ namespace LibraryApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string email, string password)
         {
+            email = email?.Trim() ?? "";
+            password = password ?? "";
+
             var admin = await _context.Admins
                 .FirstOrDefaultAsync(a => a.Email == email);
 

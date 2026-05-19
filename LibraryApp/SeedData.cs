@@ -15,11 +15,12 @@ namespace LibraryApp
 
         public static void Initialize(LibraryDbContext context)
         {
-            // Always ensure admin has a working password (handles pre-existing empty hashes)
+            // Always ensure admin has the correct demo password
+            var expectedAdminHash = HashPassword("admin123");
             var existingAdmin = context.Admins.FirstOrDefault();
-            if (existingAdmin != null && string.IsNullOrEmpty(existingAdmin.PasswordHash))
+            if (existingAdmin != null && existingAdmin.PasswordHash != expectedAdminHash)
             {
-                existingAdmin.PasswordHash = HashPassword("admin123");
+                existingAdmin.PasswordHash = expectedAdminHash;
                 context.SaveChanges();
             }
 
