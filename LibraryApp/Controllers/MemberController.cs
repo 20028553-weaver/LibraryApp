@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryApp.Data;
 using LibraryApp.Models;
+using System.Security.Claims;
 
 namespace LibraryApp.Controllers
 {
@@ -14,7 +15,11 @@ namespace LibraryApp.Controllers
             _context = context;
         }
 
-        private int? GetMemberId() => HttpContext.Session.GetInt32("MemberId");
+        private int? GetMemberId()
+        {
+            var claim = User.FindFirst("MemberId")?.Value;
+            return int.TryParse(claim, out var id) ? id : (int?)null;
+        }
 
         private IActionResult RequireLogin()
         {

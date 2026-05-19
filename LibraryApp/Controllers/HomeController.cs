@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Claims;
 using LibraryApp.Data;
 using LibraryApp.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ namespace LibraryApp.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var role = HttpContext.Session.GetString("UserRole");
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
             if (string.IsNullOrEmpty(role))
                 return RedirectToAction("Login", "Account");

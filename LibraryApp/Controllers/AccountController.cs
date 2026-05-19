@@ -4,9 +4,14 @@ using LibraryApp.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace LibraryApp.Controllers
 {
+    [AllowAnonymous]
     public class AccountController : Controller
     {
         private readonly LibraryDbContext _context;
@@ -19,7 +24,7 @@ namespace LibraryApp.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            if (HttpContext.Session.GetString("UserEmail") != null)
+            if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
             return View();
         }
@@ -31,25 +36,18 @@ namespace LibraryApp.Controllers
             email = email?.Trim() ?? "";
             password = password ?? "";
 
-            var admin = await _context.Admins
-                .FirstOrDefaultAsync(a => a.Email == email);
-
+            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Email == email);
             if (admin != null && admin.PasswordHash == HashPassword(password))
             {
-                HttpContext.Session.SetString("UserEmail", email);
-                HttpContext.Session.SetString("UserRole", "Admin");
+                await SignIn(email, "Admin", admin.FullName, null);
                 TempData["Success"] = $"Welcome back, {admin.FullName}!";
                 return RedirectToAction("Index", "Home");
             }
 
-            var member = await _context.Members
-                .FirstOrDefaultAsync(m => m.Email == email);
-
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == email);
             if (member != null && member.PasswordHash == HashPassword(password))
             {
-                HttpContext.Session.SetString("UserEmail", email);
-                HttpContext.Session.SetString("UserRole", "Member");
-                HttpContext.Session.SetInt32("MemberId", member.Id);
+                await SignIn(email, "Member", member.FullName, member.Id);
                 TempData["Success"] = $"Welcome, {member.FullName}!";
                 return RedirectToAction("Index", "Home");
             }
@@ -61,7 +59,7 @@ namespace LibraryApp.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            if (HttpContext.Session.GetString("UserEmail") != null)
+            if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
             return View();
         }
@@ -73,8 +71,10 @@ namespace LibraryApp.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var emailTaken = await _context.Members.AnyAsync(m => m.Email == model.Email)
-                          || await _context.Admins.AnyAsync(a => a.Email == model.Email);
+            var email = model.Email?.Trim() ?? "";
+
+            var emailTaken = await _context.Members.AnyAsync(m => m.Email == email)
+                          || await _context.Admins.AnyAsync(a => a.Email == email);
 
             if (emailTaken)
             {
@@ -85,9 +85,10 @@ namespace LibraryApp.Controllers
             var member = new Member
             {
                 FullName = model.FullName,
-                Email = model.Email,
+                Email = email,
                 Phone = model.Phone,
                 MembershipDate = DateTime.Now,
+                MembershipExpiry = DateTime.Now.AddYears(1),
                 Status = "Active",
                 PasswordHash = HashPassword(model.Password)
             };
@@ -95,15 +96,32 @@ namespace LibraryApp.Controllers
             _context.Members.Add(member);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Account created successfully! Please log in.";
+            await SignIn(email, "Member", member.FullName, member.Id);
+            TempData["Success"] = $"Welcome, {member.FullName}! Your account has been created.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            TempData["Success"] = "Logged out successfully.";
             return RedirectToAction("Login");
         }
 
-        public IActionResult Logout()
+        private async Task SignIn(string email, string role, string fullName, int? memberId)
         {
-            HttpContext.Session.Clear();
-            TempData["Success"] = "Logged out successfully.";
-            return RedirectToAction("Login");
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, email),
+                new Claim(ClaimTypes.Role, role),
+                new Claim("FullName", fullName)
+            };
+            if (memberId.HasValue)
+                claims.Add(new Claim("MemberId", memberId.Value.ToString()));
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
         }
 
         private static string HashPassword(string password)

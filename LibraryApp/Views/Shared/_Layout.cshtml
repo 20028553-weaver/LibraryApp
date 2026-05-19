@@ -1,8 +1,8 @@
 @{
-    var userRole = Context.Session.GetString("UserRole") ?? "";
+    var userRole = Context.User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
     var isAdmin = userRole == "Admin";
     var isMember = userRole == "Member";
-    var userEmail = Context.Session.GetString("UserEmail") ?? "";
+    var userEmail = Context.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "";
     var currentPath = Context.Request.Path.ToString().ToLower();
 }
 <!DOCTYPE html>
