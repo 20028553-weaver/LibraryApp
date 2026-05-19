@@ -1,62 +1,131 @@
 @model IEnumerable<LibraryApp.Models.Penalty>
 @{
     ViewData["Title"] = "Penalties";
+    var list = Model.ToList();
+    decimal outstanding = list.Where(p => p.Status == "Unpaid").Sum(p => p.Amount);
+    decimal collected = list.Where(p => p.Status == "Paid").Sum(p => p.Amount);
+    int membersWithFines = list.Where(p => p.Status == "Unpaid").Select(p => p.MemberId).Distinct().Count();
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Penalties</h2>
+<div class="page-header">
+    <h2><i class="bi bi-currency-dollar me-2"></i>Penalties</h2>
     <form method="post" action="/Penalties/GenerateAll">
         @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-warning" onclick="return confirm('Generate penalties for all overdue books?')">
-            Generate All Penalties
+        <button type="submit" class="btn btn-warning"
+                onclick="return confirm('Generate penalties for all overdue books?')">
+            <i class="bi bi-lightning me-1"></i> Generate All Penalties
         </button>
     </form>
 </div>
 
-@if (!Model.Any())
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="stat-card" style="border-top-color:var(--nepal-red)">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-danger">$@outstanding.ToString("F2")</div>
+                    <div class="stat-label">Total Outstanding</div>
+                </div>
+                <i class="bi bi-exclamation-triangle-fill stat-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="stat-card" style="border-top-color:#198754">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-success">$@collected.ToString("F2")</div>
+                    <div class="stat-label">Total Collected</div>
+                </div>
+                <i class="bi bi-cash-coin stat-icon text-success"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="stat-card">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value">@membersWithFines</div>
+                    <div class="stat-label">Members with Fines</div>
+                </div>
+                <i class="bi bi-people-fill stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!list.Any())
 {
-    <div class="alert alert-success">No penalties on record.</div>
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle-fill me-2"></i>No penalties on record.
+    </div>
 }
 else
 {
-    <table class="table table-bordered table-hover bg-white">
-        <thead class="table-dark">
-            <tr><th>#</th><th>Member</th><th>Book</th><th>Amount</th><th>Date Issued</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var p in Model)
-            {
+    <div class="bg-white rounded shadow-sm">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
                 <tr>
-                    <td>@p.Id</td>
-                    <td>@p.Member?.FullName</td>
-                    <td>@p.BorrowTransaction?.Book?.Title</td>
-                    <td class="@(p.Status == "Paid" ? "text-success" : "text-danger") fw-bold">
-                        $@p.Amount.ToString("F2")
-                    </td>
-                    <td>@p.DateIssued.ToString("dd MMM yyyy")</td>
-                    <td>
-                        @if (p.Status == "Paid")
-                        {
-                            <span class="badge bg-success">Paid</span>
-                        }
-                        else
-                        {
-
-                            <span class="badge bg-danger">Unpaid</span>
-                        }
-                    </td>
-                    <td>
-                        @if (p.Status != "Paid")
-                        {
-                            <form method="post" action="/Penalties/MarkPaid/@p.Id" style="display:inline;">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Mark as paid?')">Mark Paid</button>
-                            </form>
-                        }
-                        <a href="/Penalties/Edit/@p.Id" class="btn btn-sm btn-outline-secondary ms-1">Edit</a>
-                    </td>
+                    <th>#</th>
+                    <th>Member</th>
+                    <th>Book</th>
+                    <th>Days Late</th>
+                    <th>Amount</th>
+                    <th>Date Issued</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var p in list.OrderBy(p => p.Status == "Paid").ThenByDescending(p => p.DateIssued))
+                {
+                    <tr>
+                        <td class="text-muted small">@p.Id</td>
+                        <td class="small fw-semibold">@(p.Member?.FullName ?? "—")</td>
+                        <td class="small">@(p.BorrowTransaction?.Book?.Title ?? "—")</td>
+                        <td class="small text-muted">
+                            @if (p.BorrowTransaction != null)
+                            {
+                                var returnDate = p.BorrowTransaction.ReturnDate ?? DateTime.Today;
+                                var days = (int)(returnDate - p.BorrowTransaction.DueDate).TotalDays;
+                                @(days > 0 ? days.ToString() + " days" : "—")
+                            }
+                            else { @("—") }
+                        </td>
+                        <td class="fw-bold @(p.Status == "Paid" ? "text-success" : "text-danger")">
+                            $@p.Amount.ToString("F2")
+                        </td>
+                        <td class="small">@p.DateIssued.ToString("dd MMM yyyy")</td>
+                        <td>
+                            @if (p.Status == "Paid")
+                            {
+                                <span class="badge badge-paid">Paid</span>
+                                <div class="text-muted" style="font-size:0.7rem">@(p.DatePaid?.ToString("dd MMM yyyy") ?? "")</div>
+                            }
+                            else
+                            {
+                                <span class="badge badge-unpaid">Unpaid</span>
+                            }
+                        </td>
+                        <td>
+                            @if (p.Status != "Paid")
+                            {
+                                <form method="post" action="/Penalties/MarkPaid/@p.Id" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-success me-1"
+                                            onclick="return confirm('Mark this penalty as paid?')">
+                                        <i class="bi bi-check-circle me-1"></i>Mark Paid
+                                    </button>
+                                </form>
+                            }
+                            <a href="/Penalties/Details/@p.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }

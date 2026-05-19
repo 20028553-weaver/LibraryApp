@@ -1,62 +1,180 @@
-﻿@{
+@{
     ViewData["Title"] = "Dashboard";
+    var recentBooks = ViewBag.RecentBooks as List<LibraryApp.Models.Book> ?? new List<LibraryApp.Models.Book>();
+    var recentTx = ViewBag.RecentTransactions as List<LibraryApp.Models.BorrowTransaction> ?? new List<LibraryApp.Models.BorrowTransaction>();
+    decimal totalFines = ViewBag.TotalFines ?? 0m;
 }
 
-<h2 class="mb-4">Welcome to LibraryApp</h2>
+<div class="page-header">
+    <h2><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+    <span class="text-muted small"><i class="bi bi-calendar3"></i> @DateTime.Now.ToString("dddd, dd MMMM yyyy")</span>
+</div>
 
-<div class="row g-3">
-    <div class="col-md-4">
-        <a href="/Books" class="text-decoration-none">
-            <div class="card text-center p-3 h-100">
-                <i class="bi bi-journal-bookmark fs-1 text-primary"></i>
-                <h5 class="mt-2">Books</h5>
-                <p class="text-muted small">Browse the catalogue</p>
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value">@ViewBag.TotalBooks</div>
+                    <div class="stat-label">Total Books</div>
+                </div>
+                <i class="bi bi-journal-bookmark-fill stat-icon"></i>
             </div>
-        </a>
+            <div class="stat-sub"><a href="/Books" class="text-decoration-none text-muted">View catalogue →</a></div>
+        </div>
     </div>
-    <div class="col-md-4">
-        <a href="/Members" class="text-decoration-none">
-            <div class="card text-center p-3 h-100">
-                <i class="bi bi-people fs-1 text-success"></i>
-                <h5 class="mt-2">Members</h5>
-                <p class="text-muted small">Manage members</p>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value">@ViewBag.TotalMembers</div>
+                    <div class="stat-label">Total Members</div>
+                </div>
+                <i class="bi bi-people-fill stat-icon"></i>
             </div>
-        </a>
+            <div class="stat-sub"><a href="/Members" class="text-decoration-none text-muted">Manage members →</a></div>
+        </div>
     </div>
-    <div class="col-md-4">
-        <a href="/BorrowTransactions/IssueBook" class="text-decoration-none">
-            <div class="card text-center p-3 h-100">
-                <i class="bi bi-plus-circle fs-1 text-warning"></i>
-                <h5 class="mt-2">Issue Book</h5>
-                <p class="text-muted small">New borrowing</p>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card" style="border-top-color:var(--nepal-red)">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-danger">@ViewBag.OverdueCount</div>
+                    <div class="stat-label">Overdue Books</div>
+                </div>
+                <i class="bi bi-clock-history stat-icon text-danger"></i>
             </div>
-        </a>
+            <div class="stat-sub text-danger fw-semibold">$@totalFines.ToString("F2") in fines</div>
+        </div>
     </div>
-    <div class="col-md-4">
-        <a href="/BorrowTransactions/Overdue" class="text-decoration-none">
-            <div class="card text-center p-3 h-100">
-                <i class="bi bi-clock-history fs-1 text-danger"></i>
-                <h5 class="mt-2">Overdue</h5>
-                <p class="text-muted small">Past due books</p>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card" style="border-top-color:#198754">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-success">@ViewBag.ActiveBorrows</div>
+                    <div class="stat-label">Active Borrows</div>
+                </div>
+                <i class="bi bi-arrow-right-circle-fill stat-icon text-success"></i>
             </div>
-        </a>
+            <div class="stat-sub"><a href="/BorrowTransactions/IssueBook" class="text-decoration-none text-muted">Issue new book →</a></div>
+        </div>
     </div>
-    <div class="col-md-4">
-        <a href="/Reservations" class="text-decoration-none">
-            <div class="card text-center p-3 h-100">
-                <i class="bi bi-bookmark fs-1 text-info"></i>
-                <h5 class="mt-2">Reservations</h5>
-                <p class="text-muted small">Book holds</p>
-            </div>
-        </a>
+</div>
+
+<div class="row g-4">
+    <!-- Recent Books -->
+    <div class="col-lg-5">
+        <div class="d-flex justify-content-between align-items-center section-header">
+            <span><i class="bi bi-collection me-2"></i>Recent Books</span>
+            <a href="/Books" class="text-decoration-none" style="font-size:0.8rem">View all</a>
+        </div>
+        <div class="row g-2">
+            @foreach (var book in recentBooks)
+            {
+                <div class="col-6">
+                    <div class="book-card">
+                        @if (!string.IsNullOrEmpty(book.CoverImagePath))
+                        {
+                            <img src="@book.CoverImagePath" class="book-cover" alt="@book.Title" />
+                        }
+                        else
+                        {
+                            var colors = new[] { "#003893","#DC143C","#1a6e3b","#7b3fa8" };
+                            var color = colors[book.Id % colors.Length];
+                            <div class="book-cover-placeholder" style="background:@color">
+                                <i class="bi bi-book"></i>
+                            </div>
+                        }
+                        <div class="book-card-body">
+                            <h6 title="@book.Title">@book.Title</h6>
+                            <small class="text-muted d-block">@book.Author</small>
+                            <div class="mt-1">
+                                @if (book.AvailableCopies > 0)
+                                {
+                                    <span class="badge badge-available" style="font-size:0.7rem">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-borrowed" style="font-size:0.7rem">Borrowed</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (!recentBooks.Any())
+            {
+                <div class="col-12">
+                    <div class="text-center text-muted py-3">No books yet. <a href="/Books/Create">Add books</a></div>
+                </div>
+            }
+        </div>
     </div>
-    <div class="col-md-4">
-        <a href="/Penalties" class="text-decoration-none">
-            <div class="card text-center p-3 h-100">
-                <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
-                <h5 class="mt-2">Penalties</h5>
-                <p class="text-muted small">Outstanding fines</p>
+
+    <!-- Recent Transactions -->
+    <div class="col-lg-7">
+        <div class="d-flex justify-content-between align-items-center section-header">
+            <span><i class="bi bi-arrow-left-right me-2"></i>Recent Transactions</span>
+            <a href="/BorrowTransactions" class="text-decoration-none" style="font-size:0.8rem">View all</a>
+        </div>
+        <div class="bg-white rounded shadow-sm">
+            @if (!recentTx.Any())
+            {
+                <div class="text-center text-muted py-4">No transactions yet.</div>
+            }
+            else
+            {
+                <table class="table table-hover mb-0 lib-table">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Book</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tx in recentTx)
+                        {
+                            var isOverdue = tx.ReturnDate == null && tx.DueDate < DateTime.Today;
+                            <tr class="@(isOverdue ? "overdue-row" : "")">
+                                <td class="small">@(tx.Member?.FullName ?? "—")</td>
+                                <td class="small text-truncate" style="max-width:120px" title="@tx.Book?.Title">@(tx.Book?.Title ?? "—")</td>
+                                <td class="small @(isOverdue ? "text-danger fw-bold" : "")">@tx.DueDate.ToString("dd MMM yyyy")</td>
+                                <td>
+                                    @if (tx.ReturnDate != null)
+                                    {
+                                        <span class="badge badge-fulfilled" style="font-size:0.7rem">Returned</span>
+                                    }
+                                    else if (isOverdue)
+                                    {
+                                        <span class="badge badge-overdue" style="font-size:0.7rem">Overdue</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-available" style="font-size:0.7rem">Active</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="row g-2 mt-3">
+            <div class="col-6">
+                <a href="/BorrowTransactions/IssueBook" class="btn btn-nepal-blue w-100">
+                    <i class="bi bi-arrow-right-circle me-2"></i>Issue Book
+                </a>
             </div>
-        </a>
+            <div class="col-6">
+                <a href="/BorrowTransactions/Overdue" class="btn btn-nepal-red w-100">
+                    <i class="bi bi-clock-history me-2"></i>View Overdue
+                </a>
+            </div>
+        </div>
     </div>
 </div>

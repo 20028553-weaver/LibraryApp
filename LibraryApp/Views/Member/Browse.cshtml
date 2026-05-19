@@ -1,0 +1,92 @@
+@model IEnumerable<LibraryApp.Models.Book>
+@{
+    ViewData["Title"] = "Browse Books";
+    var search = ViewBag.Search as string ?? "";
+    var bookColors = new[] { "#003893","#DC143C","#1a6e3b","#7b3fa8","#c07000","#1e7a8c" };
+    int ci = 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color:var(--nepal-blue)">
+        <i class="bi bi-search me-2"></i>Browse Books
+    </h4>
+</div>
+
+<!-- Search -->
+<form method="get" class="mb-4">
+    <div class="input-group" style="max-width:480px">
+        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control" name="search" placeholder="Search title, author or ISBN…" value="@search" />
+        <button type="submit" class="btn btn-nepal-blue">Search</button>
+        @if (!string.IsNullOrEmpty(search))
+        {
+            <a href="/Member/Browse" class="btn btn-outline-secondary">Clear</a>
+        }
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No books found matching your search.</div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var book in Model)
+        {
+            var color = bookColors[ci % bookColors.Length];
+            ci++;
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="book-card">
+                    @if (!string.IsNullOrEmpty(book.CoverImagePath))
+                    {
+                        <img src="@book.CoverImagePath" class="book-cover" alt="@book.Title" />
+                    }
+                    else
+                    {
+                        <div class="book-cover-placeholder" style="background:@color">
+                            <i class="bi bi-book"></i>
+                        </div>
+                    }
+                    <div class="book-card-body">
+                        <h6 title="@book.Title">@book.Title</h6>
+                        <small class="text-muted d-block text-truncate mb-1">@book.Author</small>
+                        @if (book.AvailableCopies > 0)
+                        {
+                            <span class="badge badge-available mb-1" style="font-size:0.7rem">
+                                Available (@book.AvailableCopies)
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-borrowed mb-1" style="font-size:0.7rem">Unavailable</span>
+                        }
+                        <div class="mt-1">
+                            @if (book.AvailableCopies > 0)
+                            {
+                                <form method="post" action="/Member/Borrow">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="bookId" value="@book.Id" />
+                                    <button type="submit" class="btn btn-sm btn-nepal-blue w-100" style="font-size:0.75rem"
+                                            onclick="return confirm('Borrow \'@book.Title\'?')">
+                                        <i class="bi bi-book me-1"></i>Borrow
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form method="post" action="/Member/Reserve">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="bookId" value="@book.Id" />
+                                    <button type="submit" class="btn btn-sm btn-nepal-red w-100" style="font-size:0.75rem">
+                                        <i class="bi bi-bookmark me-1"></i>Reserve
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

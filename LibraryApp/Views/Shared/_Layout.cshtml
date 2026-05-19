@@ -1,85 +1,216 @@
-﻿<!DOCTYPE html>
+@{
+    var userRole = Context.Session.GetString("UserRole") ?? "";
+    var isAdmin = userRole == "Admin";
+    var isMember = userRole == "Member";
+    var userEmail = Context.Session.GetString("UserEmail") ?? "";
+    var currentPath = Context.Request.Path.ToString().ToLower();
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] — LibraryApp</title>
+    <title>@ViewData["Title"] — पुस्तकालय</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body class="bg-light">
+<body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-book-half"></i> LibraryApp</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="nav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-house"></i> Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Books"><i class="bi bi-journal-bookmark"></i> Books</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Members"><i class="bi bi-people"></i> Members</a></li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="bi bi-arrow-left-right"></i> Borrowing</a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/BorrowTransactions">All Transactions</a></li>
-                            <li><a class="dropdown-item" href="/BorrowTransactions/IssueBook">Issue Book</a></li>
-                            <li><a class="dropdown-item" href="/BorrowTransactions/Overdue">Overdue</a></li>
-                            <li><a class="dropdown-item" href="/BorrowTransactions/Reports">Reports</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="/Reservations"><i class="bi bi-bookmark"></i> Reservations</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/Penalties"><i class="bi bi-exclamation-triangle"></i> Penalties</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/BorrowingConfigs"><i class="bi bi-sliders"></i> Config</a></li>
-                    @if (Context.Session.GetString("UserEmail") != null)
-                    {
-                        <li class="nav-item">
-                            <span class="nav-link text-light">
-                                <i class="bi bi-person-circle"></i>
-                                @Context.Session.GetString("UserEmail")
-                            </span>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-warning" href="/Account/Logout">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </a>
-                        </li>
-                    }
-                    else
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link" href="/Account/Login">
-                                <i class="bi bi-box-arrow-in-right"></i> Login
-                            </a>
-                        </li>
-                    }
-                </ul>
+@if (isAdmin)
+{
+    <!-- ADMIN LAYOUT: Sidebar + Content -->
+    <div class="admin-wrapper">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <a class="sidebar-brand" href="/">
+                <i class="bi bi-book-half"></i> LibraryApp
+            </a>
+            <div class="sidebar-user">
+                <i class="bi bi-shield-check"></i>
+                <span class="text-truncate">@userEmail</span>
             </div>
-        </div>
-    </nav>
+            <ul class="sidebar-nav">
+                <li class="sidebar-section-label">MAIN</li>
+                <li class="@(currentPath == "/" || currentPath.StartsWith("/home") ? "active" : "")">
+                    <a href="/"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                </li>
+                <li class="sidebar-section-label">LIBRARY</li>
+                <li class="@(currentPath.StartsWith("/books") ? "active" : "")">
+                    <a href="/Books"><i class="bi bi-journal-bookmark"></i> Books</a>
+                </li>
+                <li class="@(currentPath.StartsWith("/members") ? "active" : "")">
+                    <a href="/Members"><i class="bi bi-people"></i> Members</a>
+                </li>
+                <li class="sidebar-section-label">BORROWING</li>
+                <li class="@(currentPath.StartsWith("/borrowtransactions/issuebook") ? "active" : "")">
+                    <a href="/BorrowTransactions/IssueBook"><i class="bi bi-arrow-right-circle"></i> Issue Book</a>
+                </li>
+                <li class="@(currentPath.StartsWith("/borrowtransactions/overdue") ? "active" : "")">
+                    <a href="/BorrowTransactions/Overdue"><i class="bi bi-clock-history"></i> Overdue</a>
+                </li>
+                <li class="@(currentPath.StartsWith("/reservations") ? "active" : "")">
+                    <a href="/Reservations"><i class="bi bi-bookmark-heart"></i> Reservations</a>
+                </li>
+                <li class="sidebar-section-label">FINANCE</li>
+                <li class="@(currentPath.StartsWith("/penalties") ? "active" : "")">
+                    <a href="/Penalties"><i class="bi bi-currency-dollar"></i> Penalties</a>
+                </li>
+                <li class="sidebar-section-label">ADMIN</li>
+                <li class="@(currentPath.StartsWith("/libraryprofiles") || currentPath.StartsWith("/borrowingconfigs") ? "active" : "")">
+                    <a href="/LibraryProfiles/Edit"><i class="bi bi-gear"></i> Settings</a>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="/Account/Logout" class="btn btn-sm btn-outline-light w-100">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </div>
+        </nav>
 
-    <div class="container mt-4">
+        <!-- Main Content Area -->
+        <div class="admin-main">
+            <div class="admin-topbar">
+                <span><i class="bi bi-grid-3x3-gap"></i> Admin Panel</span>
+                <span>
+                    <i class="bi bi-person-circle text-primary"></i>
+                    @userEmail
+                    <span class="badge ms-1" style="background:var(--nepal-blue);font-size:0.65rem;">ADMIN</span>
+                </span>
+            </div>
+
+            <div class="admin-content">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show py-2 mb-3" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show py-2 mb-3" role="alert">
+                        <i class="bi bi-x-circle-fill me-2"></i>@TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["Warning"] != null)
+                {
+                    <div class="alert alert-warning alert-dismissible fade show py-2 mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Warning"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @RenderBody()
+            </div>
+
+            <footer class="nepali-footer">— पुस्तकालय व्यवस्थापन प्रणाली —</footer>
+        </div>
+    </div>
+}
+else if (isMember)
+{
+    <!-- MEMBER LAYOUT: Top Navbar + Content -->
+    <div class="d-flex flex-column min-vh-100">
+        <nav class="member-navbar navbar navbar-expand-lg">
+            <div class="container">
+                <a class="navbar-brand" href="/Member">
+                    <i class="bi bi-book-half"></i> LibraryApp
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#memberNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="memberNav">
+                    <ul class="navbar-nav mx-auto">
+                        <li class="nav-item">
+                            <a class="nav-link @(currentPath == "/member" || currentPath == "/member/index" ? "active-nav" : "")" href="/Member">
+                                <i class="bi bi-house"></i> Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentPath.StartsWith("/member/browse") ? "active-nav" : "")" href="/Member/Browse">
+                                <i class="bi bi-search"></i> Browse Books
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentPath.StartsWith("/member/myborrows") ? "active-nav" : "")" href="/Member/MyBorrows">
+                                <i class="bi bi-book"></i> My Borrows
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentPath.StartsWith("/member/myreservations") ? "active-nav" : "")" href="/Member/MyReservations">
+                                <i class="bi bi-bookmark"></i> Reservations
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentPath.StartsWith("/member/mypenalties") ? "active-nav" : "")" href="/Member/MyPenalties">
+                                <i class="bi bi-currency-dollar"></i> Penalties
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> @userEmail
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item text-danger" href="/Account/Logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex-grow-1 container py-4">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show py-2" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show py-2" role="alert">
+                    <i class="bi bi-x-circle-fill me-2"></i>@TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Warning"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show py-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Warning"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @RenderBody()
+        </div>
+
+        <footer class="nepali-footer">— पुस्तकालय व्यवस्थापन प्रणाली —</footer>
+    </div>
+}
+else
+{
+    <!-- AUTH / DEFAULT LAYOUT -->
+    <div>
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success"><i class="bi bi-check-circle"></i> @TempData["Success"]</div>
+            <div class="alert alert-success position-fixed top-0 start-50 translate-middle-x mt-3 z-3 shadow" style="min-width:300px;">
+                <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+            </div>
         }
         @if (TempData["Error"] != null)
         {
-            <div class="alert alert-danger"><i class="bi bi-x-circle"></i> @TempData["Error"]</div>
-        }
-        @if (TempData["Warning"] != null)
-        {
-            <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> @TempData["Warning"]</div>
+            <div class="alert alert-danger position-fixed top-0 start-50 translate-middle-x mt-3 z-3 shadow" style="min-width:300px;">
+                <i class="bi bi-x-circle-fill me-2"></i>@TempData["Error"]
+            </div>
         }
         @RenderBody()
     </div>
+}
 
-    <footer class="text-center text-muted mt-5 mb-3">
-        <small>LibraryApp &copy; @DateTime.Now.Year</small>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
-</html> 
+</html>

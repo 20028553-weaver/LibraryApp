@@ -1,0 +1,115 @@
+@model IEnumerable<LibraryApp.Models.BorrowTransaction>
+@{
+    ViewData["Title"] = "My Borrows";
+    var list = Model.ToList();
+    var active = list.Where(bt => bt.ReturnDate == null).ToList();
+    var history = list.Where(bt => bt.ReturnDate != null).ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color:var(--nepal-blue)">
+        <i class="bi bi-book me-2"></i>My Borrows
+    </h4>
+    <a href="/Member/Browse" class="btn btn-nepal-blue btn-sm">
+        <i class="bi bi-plus me-1"></i>Borrow More
+    </a>
+</div>
+
+<!-- Active Borrows -->
+<div class="section-header mb-3">
+    <i class="bi bi-book-fill me-2"></i>Active Borrows
+    <span class="badge ms-2" style="background:var(--nepal-blue)">@active.Count</span>
+</div>
+
+@if (!active.Any())
+{
+    <div class="alert alert-info mb-4">You have no active borrows. <a href="/Member/Browse">Browse books</a> to get started!</div>
+}
+else
+{
+    <div class="bg-white rounded shadow-sm mb-4">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Author</th>
+                    <th>Borrow Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bt in active.OrderBy(x => x.DueDate))
+                {
+                    var isOverdue = bt.DueDate < DateTime.Today;
+                    var daysLeft = (int)(bt.DueDate - DateTime.Today).TotalDays;
+                    <tr class="@(isOverdue ? "overdue-row" : "")">
+                        <td class="fw-semibold small">@(bt.Book?.Title ?? "—")</td>
+                        <td class="small text-muted">@(bt.Book?.Author ?? "—")</td>
+                        <td class="small">@bt.BorrowDate.ToString("dd MMM yyyy")</td>
+                        <td class="@(isOverdue ? "text-danger fw-bold" : daysLeft <= 3 ? "text-warning fw-semibold" : "") small">
+                            @bt.DueDate.ToString("dd MMM yyyy")
+                            @if (isOverdue)
+                            {
+                                <span class="d-block" style="font-size:0.7rem">@((int)(DateTime.Today - bt.DueDate).TotalDays) days overdue</span>
+                            }
+                            else if (daysLeft <= 3)
+                            {
+                                <span class="d-block" style="font-size:0.7rem">@daysLeft days left</span>
+                            }
+                        </td>
+                        <td>
+                            @if (isOverdue)
+                            {
+                                <span class="badge badge-overdue">Overdue</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-active">Active</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- Borrow History -->
+<div class="section-header mb-3">
+    <i class="bi bi-clock-history me-2"></i>Borrow History
+    <span class="badge ms-2 bg-secondary">@history.Count</span>
+</div>
+
+@if (!history.Any())
+{
+    <div class="alert alert-light text-muted">No borrow history yet.</div>
+}
+else
+{
+    <div class="bg-white rounded shadow-sm">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Author</th>
+                    <th>Borrowed</th>
+                    <th>Returned</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var bt in history.OrderByDescending(x => x.ReturnDate))
+                {
+                    <tr>
+                        <td class="small fw-semibold">@(bt.Book?.Title ?? "—")</td>
+                        <td class="small text-muted">@(bt.Book?.Author ?? "—")</td>
+                        <td class="small">@bt.BorrowDate.ToString("dd MMM yyyy")</td>
+                        <td class="small">@(bt.ReturnDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                        <td><span class="badge badge-fulfilled">Returned</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

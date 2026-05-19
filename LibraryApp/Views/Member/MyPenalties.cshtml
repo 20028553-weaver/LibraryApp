@@ -1,0 +1,116 @@
+@model IEnumerable<LibraryApp.Models.Penalty>
+@{
+    ViewData["Title"] = "My Penalties";
+    var config = ViewBag.Config as LibraryApp.Models.BorrowingConfig;
+    var list = Model.ToList();
+    var outstanding = list.Where(p => p.Status == "Unpaid").ToList();
+    var paid = list.Where(p => p.Status == "Paid").ToList();
+    decimal totalOutstanding = outstanding.Sum(p => p.Amount);
+    decimal totalPaid = paid.Sum(p => p.Amount);
+    var dailyRate = config?.DailyPenalty ?? 5.00m;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color:var(--nepal-blue)">
+        <i class="bi bi-currency-dollar me-2"></i>My Penalties
+    </h4>
+</div>
+
+@if (outstanding.Any())
+{
+    <div class="alert alert-danger d-flex align-items-start mb-4">
+        <i class="bi bi-exclamation-triangle-fill fs-4 me-3 flex-shrink-0"></i>
+        <div>
+            <strong>Outstanding Fines: $@totalOutstanding.ToString("F2")</strong>
+            <p class="mb-0 small mt-1">You have @outstanding.Count unpaid fine(s). Please contact the library to settle your fines.</p>
+        </div>
+    </div>
+}
+else if (!list.Any())
+{
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        Great! You have no outstanding fines.
+    </div>
+}
+
+<!-- Outstanding Fines -->
+@if (outstanding.Any())
+{
+    <div class="section-header mb-3"><i class="bi bi-exclamation-triangle me-2 text-danger"></i>Outstanding Fines</div>
+    <div class="bg-white rounded shadow-sm mb-4">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Days Late</th>
+                    <th>Daily Rate</th>
+                    <th>Total Amount</th>
+                    <th>Date Issued</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in outstanding.OrderByDescending(x => x.DateIssued))
+                {
+                    var daysLate = p.BorrowTransaction != null
+                        ? (int)((p.BorrowTransaction.ReturnDate ?? DateTime.Today) - p.BorrowTransaction.DueDate).TotalDays
+                        : 0;
+                    <tr class="overdue-row">
+                        <td class="small fw-semibold">@(p.BorrowTransaction?.Book?.Title ?? "—")</td>
+                        <td class="small text-danger fw-bold">@(daysLate > 0 ? daysLate.ToString() + " days" : "—")</td>
+                        <td class="small">$@dailyRate.ToString("F2")/day</td>
+                        <td class="fw-bold text-danger">$@p.Amount.ToString("F2")</td>
+                        <td class="small">@p.DateIssued.ToString("dd MMM yyyy")</td>
+                        <td><span class="badge badge-unpaid">Unpaid</span></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="3" class="text-end">Total Outstanding:</td>
+                    <td class="text-danger">$@totalOutstanding.ToString("F2")</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}
+
+<!-- Payment History -->
+@if (paid.Any())
+{
+    <div class="section-header mb-3"><i class="bi bi-check-circle me-2 text-success"></i>Payment History</div>
+    <div class="bg-white rounded shadow-sm">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Amount</th>
+                    <th>Date Issued</th>
+                    <th>Date Paid</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in paid.OrderByDescending(x => x.DatePaid))
+                {
+                    <tr>
+                        <td class="small fw-semibold">@(p.BorrowTransaction?.Book?.Title ?? "—")</td>
+                        <td class="small text-success fw-bold">$@p.Amount.ToString("F2")</td>
+                        <td class="small">@p.DateIssued.ToString("dd MMM yyyy")</td>
+                        <td class="small">@(p.DatePaid?.ToString("dd MMM yyyy") ?? "—")</td>
+                        <td><span class="badge badge-paid">Paid</span></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-semibold">
+                    <td class="text-end">Total Paid:</td>
+                    <td class="text-success">$@totalPaid.ToString("F2")</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}

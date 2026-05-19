@@ -1,63 +1,134 @@
 @model IEnumerable<LibraryApp.Models.Book>
 @{
     ViewData["Title"] = "Books";
-    string search = Context.Request.Query["search"].ToString();
-    var list = string.IsNullOrEmpty(search) ? Model
-        : Model.Where(b => b.Title.Contains(search, StringComparison.OrdinalIgnoreCase)
-                        || b.Author.Contains(search, StringComparison.OrdinalIgnoreCase));
+    var search = ViewBag.Search as string ?? "";
+    var bookColors = new[] { "#003893","#DC143C","#1a6e3b","#7b3fa8","#c07000","#1e7a8c" };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Books (@Model.Count())</h2>
-    <a href="/Books/Create" class="btn btn-primary">Add Book</a>
+<div class="page-header">
+    <h2><i class="bi bi-journal-bookmark me-2"></i>Books <span class="text-muted fw-normal fs-6">(@Model.Count())</span></h2>
+    <a href="/Books/Create" class="btn btn-nepal-red">
+        <i class="bi bi-plus-circle me-1"></i> Add New Book
+    </a>
 </div>
 
-<form method="get" class="mb-3 d-flex gap-2">
-    <input class="form-control" name="search" placeholder="Search title or author…"
-           value="@search" style="max-width:300px;" />
-    <button type="submit" class="btn btn-outline-secondary">Search</button>
-    @if (!string.IsNullOrEmpty(search))
-    {
-        <a href="/Books" class="btn btn-outline-danger">Clear</a>
-    }
+<!-- Search -->
+<form method="get" class="mb-4">
+    <div class="input-group" style="max-width:420px">
+        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+        <input class="form-control" name="search" placeholder="Search title, author or ISBN…" value="@search" />
+        <button type="submit" class="btn btn-nepal-blue">Search</button>
+        @if (!string.IsNullOrEmpty(search))
+        {
+            <a href="/Books" class="btn btn-outline-secondary">Clear</a>
+        }
+    </div>
 </form>
 
-@if (!list.Any())
+@if (!Model.Any())
 {
-    <div class="alert alert-info">No books found.</div>
+    <div class="alert alert-info">No books found. <a href="/Books/Create">Add your first book!</a></div>
 }
 else
 {
-    <table class="table table-bordered table-hover bg-white">
-        <thead class="table-dark">
-            <tr><th>Title</th><th>Author</th><th>ISBN</th><th>Copies</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var b in list)
-            {
-                <tr>
-                    <td>@b.Title</td>
-                    <td>@b.Author</td>
-                    <td>@b.ISBN</td>
-                    <td>@b.AvailableCopies / @b.TotalCopies</td>
-                    <td>
-                        @if (b.IsAvailable && b.AvailableCopies > 0)
-                        {
-                            <span class="badge bg-success">Available</span>
-                        }
-                        else
-                        {
+    <!-- Book Card Grid -->
+    <div class="row g-3 mb-5">
+        @{ int i = 0; }
+        @foreach (var b in Model)
+        {
+            var color = bookColors[i % bookColors.Length];
+            i++;
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="book-card">
+                    @if (!string.IsNullOrEmpty(b.CoverImagePath))
+                    {
+                        <img src="@b.CoverImagePath" class="book-cover" alt="@b.Title" />
+                    }
+                    else
+                    {
+                        <div class="book-cover-placeholder" style="background:@color">
+                            <i class="bi bi-book"></i>
+                        </div>
+                    }
+                    <div class="book-card-body">
+                        <h6 title="@b.Title">@b.Title</h6>
+                        <small class="text-muted d-block text-truncate">@b.Author</small>
+                        <div class="mt-1">
+                            @if (b.AvailableCopies > 0)
+                            {
+                                <span class="badge badge-available" style="font-size:0.7rem">Available (@b.AvailableCopies)</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-borrowed" style="font-size:0.7rem">Borrowed</span>
+                            }
+                        </div>
+                        <div class="book-card-actions">
+                            <!-- Upload Cover -->
+                            <form method="post" action="/Books/UploadCover/@b.Id" enctype="multipart/form-data" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <label class="upload-cover-btn" title="Upload Cover">
+                                    <i class="bi bi-camera"></i>
+                                    <input type="file" name="coverImage" accept="image/*" hidden onchange="this.form.submit()">
+                                </label>
+                            </form>
+                            <a href="/Books/Edit/@b.Id" class="btn btn-sm btn-outline-primary" style="font-size:0.75rem;padding:0.25rem 0.4rem" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="/Books/Delete/@b.Id" class="btn btn-sm btn-outline-danger" style="font-size:0.75rem;padding:0.25rem 0.4rem" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 
-                            <span class="badge bg-danger">Out</span>
-                        }
-                    </td>
-                    <td>
-                        <a href="/Books/Details/@b.Id" class="btn btn-sm btn-outline-secondary">View</a>
-                        <a href="/Books/Edit/@b.Id" class="btn btn-sm btn-outline-primary ms-1">Edit</a>
-                        <a href="/Books/Delete/@b.Id" class="btn btn-sm btn-outline-danger ms-1">Delete</a>
-                    </td>
+    <!-- Full Books Table -->
+    <div class="section-header"><i class="bi bi-table me-2"></i>All Books</div>
+    <div class="bg-white rounded shadow-sm">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>ISBN</th>
+                    <th>Genre</th>
+                    <th>Copies</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td class="text-muted small">@b.Id</td>
+                        <td class="fw-semibold">@b.Title</td>
+                        <td class="small">@b.Author</td>
+                        <td class="small text-muted">@b.ISBN</td>
+                        <td class="small text-muted">@(b.YearPublished?.ToString() ?? "—")</td>
+                        <td class="small">@b.AvailableCopies / @b.TotalCopies</td>
+                        <td>
+                            @if (b.AvailableCopies > 0)
+                            {
+                                <span class="badge badge-available">Available</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-borrowed">Borrowed</span>
+                            }
+                        </td>
+                        <td>
+                            <a href="/Books/Details/@b.Id" class="btn btn-sm btn-outline-secondary me-1">View</a>
+                            <a href="/Books/Edit/@b.Id" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                            <a href="/Books/Delete/@b.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }

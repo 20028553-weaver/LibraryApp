@@ -1,10 +1,18 @@
-﻿using LibraryApp.Data;
+using LibraryApp.Data;
 using LibraryApp.Models;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace LibraryApp
 {
     public static class SeedData
     {
+        private static string HashPassword(string password)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
+            return Convert.ToBase64String(bytes);
+        }
+
         public static void Initialize(LibraryDbContext context)
         {
             if (!context.BorrowingConfigs.Any())
@@ -18,6 +26,21 @@ namespace LibraryApp
                     GracePeriodDays = 0,
                     AllowRenewals = true,
                     AllowReservations = true
+                });
+                context.SaveChanges();
+            }
+
+            if (!context.LibraryProfiles.Any())
+            {
+                context.LibraryProfiles.Add(new LibraryProfile
+                {
+                    Name = "Nepal Public Library",
+                    Location = "Kathmandu, Nepal",
+                    Hours = "Sun–Fri 9:00 AM – 6:00 PM",
+                    ContactNumber = "+977-1-4xxxxxx",
+                    Email = "info@nepallibrary.gov.np",
+                    Website = "https://nepallibrary.gov.np",
+                    Description = "A public library serving the community of Kathmandu."
                 });
                 context.SaveChanges();
             }
@@ -38,7 +61,7 @@ namespace LibraryApp
                 context.Books.AddRange(
                     new Book
                     {
-                        Title = "Harry Potter and the Philosophers Stone",
+                        Title = "Harry Potter and the Philosopher's Stone",
                         Author = "J.K. Rowling",
                         ISBN = "9780439708180",
                         TotalCopies = 3,
@@ -73,7 +96,7 @@ namespace LibraryApp
                         DateAdded = DateTime.Now,
                         Publisher = "HarperCollins",
                         YearPublished = 1960,
-                        Description = "A story about racial injustice."
+                        Description = "A story about racial injustice in the American South."
                     },
                     new Book
                     {
@@ -96,7 +119,10 @@ namespace LibraryApp
             {
                 context.Admins.Add(new Admin
                 {
-                    Email = "admin@library.com"
+                    FullName = "Library Admin",
+                    Email = "admin@library.com",
+                    PasswordHash = HashPassword("admin123"),
+                    Role = "Admin"
                 });
                 context.SaveChanges();
             }
@@ -109,30 +135,33 @@ namespace LibraryApp
                         FullName = "John Smith",
                         Email = "john@email.com",
                         Phone = "0412345678",
-                        Address = "123 Main St Sydney",
+                        Address = "123 Main St, Kathmandu",
                         MembershipDate = DateTime.Now.AddMonths(-6),
                         MembershipExpiry = DateTime.Now.AddYears(1),
-                        Status = "Active"
+                        Status = "Active",
+                        PasswordHash = HashPassword("member123")
                     },
                     new Member
                     {
                         FullName = "Sarah Johnson",
                         Email = "sarah@email.com",
                         Phone = "0498765432",
-                        Address = "456 Park Ave Melbourne",
+                        Address = "456 Park Ave, Pokhara",
                         MembershipDate = DateTime.Now.AddMonths(-3),
                         MembershipExpiry = DateTime.Now.AddYears(1),
-                        Status = "Active"
+                        Status = "Active",
+                        PasswordHash = HashPassword("member123")
                     },
                     new Member
                     {
                         FullName = "Mike Davis",
                         Email = "mike@email.com",
                         Phone = "0411111111",
-                        Address = "789 Queen St Brisbane",
+                        Address = "789 Queen St, Lalitpur",
                         MembershipDate = DateTime.Now.AddMonths(-1),
                         MembershipExpiry = DateTime.Now.AddYears(1),
-                        Status = "Active"
+                        Status = "Active",
+                        PasswordHash = HashPassword("member123")
                     }
                 );
                 context.SaveChanges();

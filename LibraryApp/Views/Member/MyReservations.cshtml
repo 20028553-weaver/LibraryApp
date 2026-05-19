@@ -1,0 +1,131 @@
+@model IEnumerable<LibraryApp.Models.Reservation>
+@{
+    ViewData["Title"] = "My Reservations";
+    var list = Model.ToList();
+    var pending = list.Where(r => r.Status == "Pending").ToList();
+    var history = list.Where(r => r.Status != "Pending").ToList();
+    var bookColors = new[] { "#003893","#DC143C","#1a6e3b","#7b3fa8","#c07000","#1e7a8c" };
+    int ci = 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color:var(--nepal-blue)">
+        <i class="bi bi-bookmark me-2"></i>My Reservations
+    </h4>
+    <a href="/Member/Browse" class="btn btn-nepal-red btn-sm">
+        <i class="bi bi-plus me-1"></i>Browse Books
+    </a>
+</div>
+
+<!-- Current Reservations -->
+<div class="section-header mb-3">
+    <i class="bi bi-hourglass-split me-2"></i>Current Reservations
+    <span class="badge ms-2" style="background:var(--nepal-blue)">@pending.Count</span>
+</div>
+
+@if (!pending.Any())
+{
+    <div class="alert alert-info mb-4">No pending reservations. <a href="/Member/Browse">Browse books</a> to reserve one!</div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        @foreach (var r in pending)
+        {
+            var color = bookColors[ci % bookColors.Length];
+            ci++;
+            var isExpired = r.ExpiryDate.HasValue && r.ExpiryDate < DateTime.Today;
+            <div class="col-md-6 col-lg-4">
+                <div class="book-card @(isExpired ? "border border-danger" : "")">
+                    <div class="d-flex p-3 gap-3">
+                        @if (!string.IsNullOrEmpty(r.Book?.CoverImagePath))
+                        {
+                            <img src="@r.Book.CoverImagePath" style="width:60px;height:80px;object-fit:cover;border-radius:4px;" alt="cover" />
+                        }
+                        else
+                        {
+                            <div style="width:60px;height:80px;background:@color;border-radius:4px;display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;flex-shrink:0">
+                                <i class="bi bi-book"></i>
+                            </div>
+                        }
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">@(r.Book?.Title ?? "—")</h6>
+                            <small class="text-muted d-block">@(r.Book?.Author ?? "—")</small>
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-calendar me-1"></i>Reserved: @r.ReservedDate.ToString("dd MMM yyyy")
+                            </small>
+                            @if (r.ExpiryDate.HasValue)
+                            {
+                                <small class="@(isExpired ? "text-danger fw-bold" : "text-muted") d-block">
+                                    <i class="bi bi-calendar-x me-1"></i>
+                                    Expires: @r.ExpiryDate.Value.ToString("dd MMM yyyy")
+                                    @if (isExpired) { <span>(Expired)</span> }
+                                </small>
+                            }
+                        </div>
+                    </div>
+                    <div class="px-3 pb-3 d-flex justify-content-between align-items-center">
+                        <span class="badge badge-pending">Pending</span>
+                        <form method="post" action="/Member/CancelReservation/@r.Id">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Cancel this reservation?')">
+                                <i class="bi bi-x me-1"></i>Cancel
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Reservation History -->
+<div class="section-header mb-3">
+    <i class="bi bi-clock-history me-2"></i>Reservation History
+    <span class="badge ms-2 bg-secondary">@history.Count</span>
+</div>
+
+@if (!history.Any())
+{
+    <div class="alert alert-light text-muted">No reservation history yet.</div>
+}
+else
+{
+    <div class="bg-white rounded shadow-sm">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
+                <tr>
+                    <th>Book</th>
+                    <th>Reserved</th>
+                    <th>Expiry</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in history.OrderByDescending(x => x.ReservedDate))
+                {
+                    <tr>
+                        <td class="small fw-semibold">@(r.Book?.Title ?? "—")</td>
+                        <td class="small">@r.ReservedDate.ToString("dd MMM yyyy")</td>
+                        <td class="small">@(r.ExpiryDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                        <td>
+                            @if (r.Status == "Fulfilled")
+                            {
+                                <span class="badge badge-fulfilled">Fulfilled</span>
+                            }
+                            else if (r.Status == "Cancelled")
+                            {
+                                <span class="badge badge-cancelled">Cancelled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@r.Status</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

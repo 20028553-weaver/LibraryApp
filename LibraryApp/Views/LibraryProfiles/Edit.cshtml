@@ -1,67 +1,134 @@
 @model LibraryApp.Models.LibraryProfile
-
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Settings";
+    var config = ViewBag.Config as LibraryApp.Models.BorrowingConfig;
 }
 
-<h1>Edit</h1>
-
-<h4>LibraryProfile</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Location" class="control-label"></label>
-                <input asp-for="Location" class="form-control" />
-                <span asp-validation-for="Location" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Hours" class="control-label"></label>
-                <input asp-for="Hours" class="form-control" />
-                <span asp-validation-for="Hours" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ContactNumber" class="control-label"></label>
-                <input asp-for="ContactNumber" class="form-control" />
-                <span asp-validation-for="ContactNumber" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Website" class="control-label"></label>
-                <input asp-for="Website" class="form-control" />
-                <span asp-validation-for="Website" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="LogoPath" class="control-label"></label>
-                <input asp-for="LogoPath" class="form-control" />
-                <span asp-validation-for="LogoPath" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
-    </div>
+<div class="page-header">
+    <h2><i class="bi bi-gear me-2"></i>Settings</h2>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
+<div class="row g-4">
+    <!-- Library Profile -->
+    <div class="col-lg-6">
+        <div class="settings-card">
+            <div class="card-section-title">
+                <i class="bi bi-building"></i> Library Profile
+            </div>
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                <input type="hidden" asp-for="Id" />
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label fw-semibold">Library Name <span class="text-danger">*</span></label>
+                    <input asp-for="Name" class="form-control" placeholder="e.g. Nepal Public Library" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Location" class="form-label fw-semibold">Location <span class="text-danger">*</span></label>
+                    <input asp-for="Location" class="form-control" placeholder="e.g. Kathmandu, Nepal" />
+                    <span asp-validation-for="Location" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Hours" class="form-label fw-semibold">Operating Hours</label>
+                    <input asp-for="Hours" class="form-control" placeholder="e.g. Mon–Fri 9am–6pm" />
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ContactNumber" class="form-label fw-semibold">Contact Number</label>
+                        <input asp-for="ContactNumber" class="form-control" placeholder="+977-..." />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                        <input asp-for="Email" class="form-control" placeholder="library@example.com" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Website" class="form-label fw-semibold">Website</label>
+                    <input asp-for="Website" class="form-control" placeholder="https://..." />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-nepal-blue">
+                    <i class="bi bi-save me-2"></i>Save Profile
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Borrowing Configuration -->
+    <div class="col-lg-6">
+        @if (config != null)
+        {
+            <div class="settings-card">
+                <div class="card-section-title">
+                    <i class="bi bi-sliders"></i> Borrowing Configuration
+                </div>
+                <form asp-controller="BorrowingConfigs" asp-action="Edit" asp-route-id="@config.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@config.Id" />
+                    <div class="row g-2">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Loan Duration (days)</label>
+                            <input name="LoanDurationDays" type="number" class="form-control" value="@config.LoanDurationDays" min="1" max="365" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Grace Period (days)</label>
+                            <input name="GracePeriodDays" type="number" class="form-control" value="@config.GracePeriodDays" min="0" max="30" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Max Renewals</label>
+                            <input name="MaxRenewals" type="number" class="form-control" value="@config.MaxRenewals" min="0" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Max Items/Member</label>
+                            <input name="MaxItemsPerMember" type="number" class="form-control" value="@config.MaxItemsPerMember" min="1" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Daily Penalty ($)</label>
+                            <div class="input-group input-group-dollar">
+                                <span class="input-group-text">$</span>
+                                <input name="DailyPenalty" type="number" step="0.01" class="form-control" value="@config.DailyPenalty" min="0" />
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Max Penalty Cap ($)</label>
+                            <div class="input-group input-group-dollar">
+                                <span class="input-group-text">$</span>
+                                <input name="MaxPenaltyCap" type="number" step="0.01" class="form-control" value="@config.MaxPenaltyCap" min="0" placeholder="No cap" />
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="form-check mt-2">
+                                <input name="AllowRenewals" type="checkbox" class="form-check-input" id="allowRenewals" @(config.AllowRenewals ? "checked" : "") value="true" />
+                                <input name="AllowRenewals" type="hidden" value="false" />
+                                <label class="form-check-label fw-semibold" for="allowRenewals">Allow Renewals</label>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="form-check mt-2">
+                                <input name="AllowReservations" type="checkbox" class="form-check-input" id="allowRes" @(config.AllowReservations ? "checked" : "") value="true" />
+                                <input name="AllowReservations" type="hidden" value="false" />
+                                <label class="form-check-label fw-semibold" for="allowRes">Allow Reservations</label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-nepal-blue">
+                        <i class="bi bi-save me-2"></i>Save Config
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-warning">
+                Borrowing config not found.
+                <a href="/BorrowingConfigs/Create" class="alert-link">Create one</a>.
+            </div>
+        }
+    </div>
 </div>
 
 @section Scripts {

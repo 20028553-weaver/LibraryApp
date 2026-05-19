@@ -1,77 +1,141 @@
 @model IEnumerable<LibraryApp.Models.Reservation>
 @{
     ViewData["Title"] = "Reservations";
+    var list = Model.ToList();
+    int pending = list.Count(r => r.Status == "Pending");
+    int fulfilled = list.Count(r => r.Status == "Fulfilled");
+    int cancelled = list.Count(r => r.Status == "Cancelled");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Reservations</h2>
-    <a href="/Reservations/Reserve" class="btn btn-primary">New Reservation</a>
+<div class="page-header">
+    <h2><i class="bi bi-bookmark-heart me-2"></i>Reservations</h2>
+    <a href="/Reservations/Create" class="btn btn-nepal-red">
+        <i class="bi bi-plus-circle me-1"></i> New Reservation
+    </a>
 </div>
 
-@if (!Model.Any())
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value">@list.Count</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <i class="bi bi-bookmark-fill stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card" style="border-top-color:#ffc107">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-warning">@pending</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <i class="bi bi-hourglass-split stat-icon text-warning"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card" style="border-top-color:#198754">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-success">@fulfilled</div>
+                    <div class="stat-label">Fulfilled</div>
+                </div>
+                <i class="bi bi-check-circle-fill stat-icon text-success"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card" style="border-top-color:#6c757d">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-secondary">@cancelled</div>
+                    <div class="stat-label">Cancelled</div>
+                </div>
+                <i class="bi bi-x-circle-fill stat-icon text-secondary"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!list.Any())
 {
     <div class="alert alert-info">No reservations yet.</div>
 }
 else
 {
-    <table class="table table-bordered table-hover bg-white">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Book</th>
-                <th>Member</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var r in Model)
-            {
+    <div class="bg-white rounded shadow-sm">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
                 <tr>
-                    <td>@r.Id</td>
-                    <td>@r.Book?.Title</td>
-                    <td>@r.Member?.FullName</td>
-                    <td>
-                        @if (r.Status == "Pending")
-                        {
-                            <span class="badge bg-warning text-dark">Pending</span>
-                        }
-                        else if (r.Status == "Fulfilled")
-                        {
-                            <span class="badge bg-success">Fulfilled</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">@r.Status</span>
-                        }
-                    </td>
-                    <td>
-                        @if (r.Status == "Pending")
-                        {
-                            <form method="post"
-                                  action="/Reservations/Fulfil/@r.Id"
-                                  style="display:inline;">
-                                @Html.AntiForgeryToken()
-                                <button type="submit"
-                                        class="btn btn-sm btn-success"
-                                        onclick="return confirm('Fulfil?')">
-                                    Fulfil
-                                </button>
-                            </form>
-                            <form method="post"
-                                  action="/Reservations/Cancel/@r.Id"
-                                  style="display:inline;">
-                                @Html.AntiForgeryToken()
-                                <button type="submit"
-                                        class="btn btn-sm btn-danger ms-1"
-                                        onclick="return confirm('Cancel?')">
-                                    Cancel
-                                </button>
-                            </form>
-                        }
-                    </td>
+                    <th>#</th>
+                    <th>Member</th>
+                    <th>Book</th>
+                    <th>Reserved Date</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var r in list)
+                {
+                    <tr>
+                        <td class="text-muted small">@r.Id</td>
+                        <td class="small fw-semibold">@(r.Member?.FullName ?? "—")</td>
+                        <td class="small">@(r.Book?.Title ?? "—")</td>
+                        <td class="small">@r.ReservedDate.ToString("dd MMM yyyy")</td>
+                        <td class="small @(r.ExpiryDate.HasValue && r.ExpiryDate < DateTime.Today ? "text-danger" : "")">
+                            @(r.ExpiryDate?.ToString("dd MMM yyyy") ?? "—")
+                        </td>
+                        <td>
+                            @if (r.Status == "Pending")
+                            {
+                                <span class="badge badge-pending">Pending</span>
+                            }
+                            else if (r.Status == "Fulfilled")
+                            {
+                                <span class="badge badge-fulfilled">Fulfilled</span>
+                            }
+                            else if (r.Status == "Cancelled")
+                            {
+                                <span class="badge badge-cancelled">Cancelled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@r.Status</span>
+                            }
+                        </td>
+                        <td>
+                            @if (r.Status == "Pending")
+                            {
+                                <form method="post" action="/Reservations/Fulfill/@r.Id" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-success me-1"
+                                            onclick="return confirm('Fulfill this reservation?')">
+                                        <i class="bi bi-check"></i> Fulfill
+                                    </button>
+                                </form>
+                                <form method="post" action="/Reservations/Cancel/@r.Id" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Cancel this reservation?')">
+                                        <i class="bi bi-x"></i> Cancel
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a href="/Reservations/Details/@r.Id" class="btn btn-sm btn-outline-secondary">View</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }

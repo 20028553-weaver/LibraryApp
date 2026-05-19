@@ -1,84 +1,138 @@
-@model LibraryApp.Models.BorrowTransaction
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = "Issue Book";
     var config = ViewBag.Config as LibraryApp.Models.BorrowingConfig;
+    var todayIssued = ViewBag.TodayIssued as List<LibraryApp.Models.BorrowTransaction>
+                      ?? new List<LibraryApp.Models.BorrowTransaction>();
+    var loanDays = config?.LoanDurationDays ?? 14;
+    var dueDate = DateTime.Today.AddDays(loanDays);
+    var memberList = (ViewBag.MemberId as SelectList) ?? new SelectList(Enumerable.Empty<object>());
+    var bookList   = (ViewBag.BookId   as SelectList) ?? new SelectList(Enumerable.Empty<object>());
+    var adminList  = (ViewBag.AdminId  as SelectList) ?? new SelectList(Enumerable.Empty<object>());
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-arrow-right-circle"></i> Issue a Book</h2>
-    <a href="/BorrowTransactions" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Back
-    </a>
+<div class="page-header">
+    <h2><i class="bi bi-arrow-right-circle me-2"></i>Issue Book</h2>
 </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card p-4 shadow-sm">
+@if (config != null)
+{
+    <div class="alert alert-info d-flex align-items-center py-2 mb-4">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        <span>
+            Loan duration: <strong>@config.LoanDurationDays days</strong> —
+            Due date will be <strong>@dueDate.ToString("dd MMM yyyy")</strong>.
+            Daily fine: <strong>$@config.DailyPenalty</strong>
+        </span>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Issue Form -->
+    <div class="col-lg-5">
+        <div class="settings-card">
+            <div class="card-section-title"><i class="bi bi-plus-circle"></i> New Issue</div>
             <form asp-action="IssueBook" method="post">
                 @Html.AntiForgeryToken()
-
                 <div class="mb-3">
-                    <label asp-for="MemberId" class="form-label fw-semibold">Member</label>
-                    <select asp-for="MemberId" asp-items="ViewBag.MemberId" class="form-select">
-                        <option value="">-- Select member --</option>
+                    <label class="form-label fw-semibold">Member <span class="text-danger">*</span></label>
+                    <select name="MemberId" class="form-select" required>
+                        <option value="">— Select member —</option>
+                        @foreach (SelectListItem item in memberList)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
                     </select>
-                    <span asp-validation-for="MemberId" class="text-danger small"></span>
                 </div>
-
                 <div class="mb-3">
-                    <label asp-for="BookId" class="form-label fw-semibold">Book <span class="text-muted small">(available only)</span></label>
-                    <select asp-for="BookId" asp-items="ViewBag.BookId" class="form-select">
-                        <option value="">-- Select book --</option>
-                    </select>
-                    <span asp-validation-for="BookId" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-4">
-                    <label asp-for="AdminId" class="form-label fw-semibold">Processed By <span class="text-muted small">(optional)</span></label>
-                    <select asp-for="AdminId" asp-items="ViewBag.AdminId" class="form-select">
-                        <option value="">-- Select admin --</option>
+                    <label class="form-label fw-semibold">Book <span class="text-danger">*</span> <span class="text-muted small">(available only)</span></label>
+                    <select name="BookId" class="form-select" required>
+                        <option value="">— Select book —</option>
+                        @foreach (SelectListItem item in bookList)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
                     </select>
                 </div>
-
-                @if (config != null)
-                {
-                    <div class="alert alert-info py-2 small mb-3">
-                        <i class="bi bi-info-circle"></i>
-                        Due date will be set to <strong>@config.LoanDurationDays days</strong> from today
-                        (@DateTime.Now.AddDays(config.LoanDurationDays).ToString("dd MMM yyyy")).
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Processed By <span class="text-muted small">(optional)</span></label>
+                    <select name="AdminId" class="form-select">
+                        <option value="">— Select admin —</option>
+                        @foreach (SelectListItem item in adminList)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold">Borrow Date</label>
+                        <input type="date" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly />
                     </div>
-                }
-
-                <div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Issue Book
-                    </button>
-                    <a href="/BorrowTransactions" class="btn btn-outline-secondary ms-2">Cancel</a>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold">Due Date</label>
+                        <input type="date" class="form-control" value="@dueDate.ToString("yyyy-MM-dd")" readonly />
+                    </div>
                 </div>
+                <button type="submit" class="btn btn-nepal-blue w-100">
+                    <i class="bi bi-check-circle me-2"></i> Issue Book
+                </button>
             </form>
         </div>
-    </div>
 
-    @if (config != null)
-    {
-        <div class="col-md-4">
-            <div class="card p-3 shadow-sm">
-                <h6 class="fw-bold mb-3"><i class="bi bi-sliders"></i> Borrowing Rules</h6>
-                <ul class="list-unstyled small">
-                    <li class="mb-1"><i class="bi bi-calendar-check text-primary"></i> <strong>Loan Duration:</strong> @config.LoanDurationDays days</li>
-                    <li class="mb-1"><i class="bi bi-stack text-primary"></i> <strong>Max Books/Member:</strong> @config.MaxItemsPerMember</li>
-                    <li class="mb-1"><i class="bi bi-arrow-repeat text-primary"></i> <strong>Max Renewals:</strong> @config.MaxRenewals</li>
-                    <li class="mb-1"><i class="bi bi-currency-dollar text-danger"></i> <strong>Daily Fine:</strong> $@config.DailyPenalty</li>
+        @if (config != null)
+        {
+            <div class="settings-card mt-3">
+                <div class="card-section-title"><i class="bi bi-sliders"></i> Borrowing Rules</div>
+                <ul class="list-unstyled small mb-0">
+                    <li class="mb-2"><i class="bi bi-calendar-check text-primary me-2"></i><strong>Loan Duration:</strong> @config.LoanDurationDays days</li>
+                    <li class="mb-2"><i class="bi bi-stack text-primary me-2"></i><strong>Max Books/Member:</strong> @config.MaxItemsPerMember</li>
+                    <li class="mb-2"><i class="bi bi-arrow-repeat text-primary me-2"></i><strong>Max Renewals:</strong> @config.MaxRenewals</li>
+                    <li class="mb-2"><i class="bi bi-currency-dollar text-danger me-2"></i><strong>Daily Fine:</strong> $@config.DailyPenalty</li>
                     @if (config.GracePeriodDays > 0)
                     {
-                        <li class="mb-1"><i class="bi bi-shield-check text-success"></i> <strong>Grace Period:</strong> @config.GracePeriodDays days</li>
+                        <li class="mb-2"><i class="bi bi-shield-check text-success me-2"></i><strong>Grace Period:</strong> @config.GracePeriodDays days</li>
                     }
                 </ul>
             </div>
-        </div>
-    }
-</div>
+        }
+    </div>
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    <!-- Today's Issued Books -->
+    <div class="col-lg-7">
+        <div class="settings-card">
+            <div class="card-section-title">
+                <i class="bi bi-list-check"></i> Issued Today
+                <span class="badge ms-2" style="background:var(--nepal-blue)">@todayIssued.Count</span>
+            </div>
+            @if (!todayIssued.Any())
+            {
+                <p class="text-muted text-center py-3">No books issued today yet.</p>
+            }
+            else
+            {
+                <table class="table table-hover mb-0 lib-table">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Book</th>
+                            <th>Due Date</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in todayIssued)
+                        {
+                            <tr>
+                                <td class="small">@(t.Member?.FullName ?? "—")</td>
+                                <td class="small fw-semibold">@(t.Book?.Title ?? "—")</td>
+                                <td class="small">@t.DueDate.ToString("dd MMM yyyy")</td>
+                                <td class="small text-muted">@t.BorrowDate.ToString("HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

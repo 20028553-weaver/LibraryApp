@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using LibraryApp.Data;
 using LibraryApp.Models;
@@ -22,24 +17,21 @@ namespace LibraryApp.Controllers
         // GET: Members
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Members.ToListAsync());
+            var members = await _context.Members
+                .Include(m => m.BorrowTransactions)
+                .OrderBy(m => m.FullName)
+                .ToListAsync();
+            return View(members);
         }
 
         // GET: Members/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
+            if (id == null) return NotFound();
             var member = await _context.Members
+                .Include(m => m.BorrowTransactions).ThenInclude(bt => bt.Book)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (member == null)
-            {
-                return NotFound();
-            }
-
+            if (member == null) return NotFound();
             return View(member);
         }
 
@@ -50,16 +42,16 @@ namespace LibraryApp.Controllers
         }
 
         // POST: Members/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,FullName,Email,Phone,Address,MembershipDate,MembershipExpiry,Status")] Member member)
         {
             if (ModelState.IsValid)
             {
+                member.PasswordHash = "";
                 _context.Add(member);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = $"Member '{member.FullName}' added successfully.";
                 return RedirectToAction(nameof(Index));
             }
             return View(member);
@@ -68,69 +60,42 @@ namespace LibraryApp.Controllers
         // GET: Members/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
+            if (id == null) return NotFound();
             var member = await _context.Members.FindAsync(id);
-            if (member == null)
-            {
-                return NotFound();
-            }
+            if (member == null) return NotFound();
             return View(member);
         }
 
         // POST: Members/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FullName,Email,Phone,Address,MembershipDate,MembershipExpiry,Status")] Member member)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FullName,Email,Phone,Address,MembershipDate,MembershipExpiry,Status")] Member formMember)
         {
-            if (id != member.Id)
-            {
-                return NotFound();
-            }
-
+            if (id != formMember.Id) return NotFound();
             if (ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(member);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!MemberExists(member.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                var existing = await _context.Members.FindAsync(id);
+                if (existing == null) return NotFound();
+                existing.FullName = formMember.FullName;
+                existing.Email = formMember.Email;
+                existing.Phone = formMember.Phone;
+                existing.Address = formMember.Address;
+                existing.MembershipDate = formMember.MembershipDate;
+                existing.MembershipExpiry = formMember.MembershipExpiry;
+                existing.Status = formMember.Status;
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"Member '{existing.FullName}' updated.";
                 return RedirectToAction(nameof(Index));
             }
-            return View(member);
+            return View(formMember);
         }
 
         // GET: Members/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var member = await _context.Members
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (member == null)
-            {
-                return NotFound();
-            }
-
+            if (id == null) return NotFound();
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Id == id);
+            if (member == null) return NotFound();
             return View(member);
         }
 
@@ -140,18 +105,10 @@ namespace LibraryApp.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var member = await _context.Members.FindAsync(id);
-            if (member != null)
-            {
-                _context.Members.Remove(member);
-            }
-
+            if (member != null) _context.Members.Remove(member);
             await _context.SaveChangesAsync();
+            TempData["Success"] = "Member deleted.";
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool MemberExists(int id)
-        {
-            return _context.Members.Any(e => e.Id == id);
         }
     }
 }

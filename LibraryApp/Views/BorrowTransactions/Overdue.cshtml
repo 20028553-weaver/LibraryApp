@@ -1,68 +1,122 @@
-﻿@model IEnumerable<LibraryApp.Models.BorrowTransaction>
+@model IEnumerable<LibraryApp.Models.BorrowTransaction>
 @{
     ViewData["Title"] = "Overdue Books";
+    var config = ViewBag.Config as LibraryApp.Models.BorrowingConfig;
+    var dailyPenalty = config?.DailyPenalty ?? 5.00m;
+    var list = Model.ToList();
+    decimal totalFines = list.Sum(t => Math.Max(0, (int)(DateTime.Today - t.DueDate).TotalDays) * dailyPenalty);
+    int membersAffected = list.Select(t => t.MemberId).Distinct().Count();
+    double avgDays = list.Any() ? list.Average(t => Math.Max(0, (DateTime.Today - t.DueDate).TotalDays)) : 0;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="text-danger">Overdue Books (@Model.Count())</h2>
-    <div>
-        <form method="post" action="/Penalties/GenerateAll" style="display:inline;">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-warning"
-                    onclick="return confirm('Generate penalties?')">
-                Generate All Penalties
-            </button>
-        </form>
-        <a href="/BorrowTransactions" class="btn btn-secondary ms-2">Back</a>
+<div class="page-header">
+    <h2><i class="bi bi-clock-history me-2"></i>Overdue Books</h2>
+    <form method="post" action="/Penalties/GenerateAll">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-warning"
+                onclick="return confirm('Generate penalties for all overdue books?')">
+            <i class="bi bi-lightning me-1"></i> Generate All Penalties
+        </button>
+    </form>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card" style="border-top-color:var(--nepal-red)">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-danger">@list.Count</div>
+                    <div class="stat-label">Total Overdue</div>
+                </div>
+                <i class="bi bi-exclamation-circle-fill stat-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card" style="border-top-color:var(--nepal-red)">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value text-danger">$@totalFines.ToString("F2")</div>
+                    <div class="stat-label">Total Fines</div>
+                </div>
+                <i class="bi bi-currency-dollar stat-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value">@membersAffected</div>
+                    <div class="stat-label">Members Affected</div>
+                </div>
+                <i class="bi bi-people-fill stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-value">@((int)avgDays)</div>
+                    <div class="stat-label">Avg Days Late</div>
+                </div>
+                <i class="bi bi-calendar-x stat-icon"></i>
+            </div>
+        </div>
     </div>
 </div>
 
-@if (!Model.Any())
+@if (!list.Any())
 {
-    <div class="alert alert-success">No overdue books!</div>
+    <div class="alert alert-success">
+        <i class="bi bi-check-circle-fill me-2"></i>Great news — no overdue books!
+    </div>
 }
 else
 {
-    <table class="table table-bordered table-hover bg-white">
-        <thead class="table-dark">
-            <tr>
-                <th>Book</th>
-                <th>Member</th>
-                <th>Due Date</th>
-                <th>Days Overdue</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var t in Model.OrderBy(x => x.DueDate))
-            {
-                <tr class="table-danger">
-                    <td>@t.Book?.Title</td>
-                    <td>@t.Member?.FullName</td>
-                    <td><strong>@t.DueDate.ToString("dd MMM yyyy")</strong></td>
-                    <td>
-                        <span class="badge bg-danger">
-                            @((int)(DateTime.Now - t.DueDate).TotalDays) days
-                        </span>
-                    </td>
-                    <td>
-                        <form method="post"
-                              action="/BorrowTransactions/Return/@t.Id"
-                              style="display:inline;">
-                            @Html.AntiForgeryToken()
-                            <button type="submit"
-                                    class="btn btn-sm btn-success"
-                                    onclick="return confirm('Return?')">
-                                Return
-                            </button>
-                        </form>
-                        <a href="/BorrowTransactions/Details/@t.Id"
-                               class="btn btn-sm btn-outline-secondary ms-1">
-                            View
-                        </a>
-                    </td>
+    <div class="bg-white rounded shadow-sm">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>Book</th>
+                    <th>Due Date</th>
+                    <th>Days Overdue</th>
+                    <th>Fine Amount</th>
+                    <th>Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var t in list)
+                {
+                    var days = (int)(DateTime.Today - t.DueDate).TotalDays;
+                    var fine = days * dailyPenalty;
+                    <tr class="overdue-row">
+                        <td class="small fw-semibold">@(t.Member?.FullName ?? "—")</td>
+                        <td class="small">@(t.Book?.Title ?? "—")</td>
+                        <td class="small fw-bold text-danger">@t.DueDate.ToString("dd MMM yyyy")</td>
+                        <td>
+                            <span class="badge badge-overdue">@days days</span>
+                        </td>
+                        <td class="fw-bold text-danger">$@fine.ToString("F2")</td>
+                        <td>
+                            <form method="post" action="/BorrowTransactions/Return/@t.Id" style="display:inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-success me-1"
+                                        onclick="return confirm('Mark as returned?')">
+                                    <i class="bi bi-check-circle me-1"></i>Return
+                                </button>
+                            </form>
+                            <a href="/BorrowTransactions/Details/@t.Id"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }

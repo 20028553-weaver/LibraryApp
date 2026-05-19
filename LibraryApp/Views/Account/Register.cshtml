@@ -1,60 +1,69 @@
 @model LibraryApp.Models.RegisterViewModel
 @{
     ViewData["Title"] = "Create Account";
+    Layout = "_Layout";
 }
 
-<div class="row justify-content-center mt-5">
-    <div class="col-md-5">
-        <div class="card p-4 shadow-sm">
-            <h3 class="text-center mb-1">
-                <i class="bi bi-book-half"></i> LibraryApp
-            </h3>
-            <p class="text-center text-muted mb-4">Create your member account</p>
-
-            <form asp-action="Register" method="post">
-                @Html.AntiForgeryToken()
-
-                <div class="mb-3">
-                    <label asp-for="FullName" class="form-label">Full Name</label>
-                    <input asp-for="FullName" class="form-control" placeholder="Enter your full name" />
-                    <span asp-validation-for="FullName" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Email" class="form-label">Email</label>
-                    <input asp-for="Email" class="form-control" placeholder="Enter your email" />
-                    <span asp-validation-for="Email" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Phone" class="form-label">Phone <span class="text-muted">(optional)</span></label>
-                    <input asp-for="Phone" class="form-control" placeholder="Enter your phone number" />
-                    <span asp-validation-for="Phone" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Password" class="form-label">Password</label>
-                    <input asp-for="Password" class="form-control" placeholder="At least 6 characters" />
-                    <span asp-validation-for="Password" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
-                    <input asp-for="ConfirmPassword" class="form-control" placeholder="Re-enter your password" />
-                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
-                </div>
-
-                <button type="submit" class="btn btn-success w-100">
-                    <i class="bi bi-person-plus"></i> Create Account
-                </button>
-            </form>
-
-            <hr />
-            <p class="text-center mb-0">
-                Already have an account?
-                <a asp-action="Login">Log in here</a>
-            </p>
+<div class="auth-wrapper">
+    <div class="auth-card shadow-lg" style="max-width:480px">
+        <div class="auth-logo">
+            <i class="bi bi-book-half" style="color:var(--nepal-blue)"></i>
+            <h3 style="color:var(--nepal-blue)">Create Account</h3>
+            <p class="text-muted small mb-0">Register as a library member</p>
         </div>
+
+        <form asp-action="Register" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label asp-for="FullName" class="form-label fw-semibold">Full Name</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-person text-muted"></i></span>
+                    <input asp-for="FullName" class="form-control" placeholder="Your full name" />
+                </div>
+                <span asp-validation-for="FullName" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label fw-semibold">Email</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-envelope text-muted"></i></span>
+                    <input asp-for="Email" class="form-control" placeholder="you@example.com" />
+                </div>
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Phone" class="form-label fw-semibold">Phone <span class="text-muted fw-normal">(optional)</span></label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-telephone text-muted"></i></span>
+                    <input asp-for="Phone" class="form-control" placeholder="+977-..." />
+                </div>
+                <span asp-validation-for="Phone" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label fw-semibold">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-lock text-muted"></i></span>
+                    <input asp-for="Password" class="form-control" placeholder="At least 6 characters" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <div class="mb-4">
+                <label asp-for="ConfirmPassword" class="form-label fw-semibold">Confirm Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-lock-fill text-muted"></i></span>
+                    <input asp-for="ConfirmPassword" class="form-control" placeholder="Repeat password" />
+                </div>
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+            <button type="submit" class="btn btn-nepal-blue w-100 py-2 fw-semibold">
+                <i class="bi bi-person-plus me-2"></i>Create Account
+            </button>
+        </form>
+
+        <hr class="my-3" />
+        <p class="text-center mb-0 small">
+            Already have an account?
+            <a asp-action="Login" style="color:var(--nepal-blue)" class="fw-semibold">Sign in here</a>
+        </p>
     </div>
 </div>
 

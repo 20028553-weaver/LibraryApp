@@ -1,0 +1,185 @@
+@model LibraryApp.Models.Member
+@{
+    ViewData["Title"] = "My Library";
+    var books = ViewBag.Books as List<LibraryApp.Models.Book> ?? new List<LibraryApp.Models.Book>();
+    var activeBorrows = Model.BorrowTransactions.Where(bt => bt.Status == "Borrowed" && bt.ReturnDate == null).ToList();
+    var pendingReservations = Model.Reservations.Where(r => r.Status == "Pending").ToList();
+    var outstandingFines = Model.Penalties.Where(p => p.Status == "Unpaid").Sum(p => p.Amount);
+    var overdueCount = activeBorrows.Count(bt => bt.DueDate < DateTime.Today);
+    var bookColors = new[] { "#003893","#DC143C","#1a6e3b","#7b3fa8","#c07000","#1e7a8c" };
+    int ci = 0;
+}
+
+<!-- Welcome Hero Banner -->
+<div class="member-hero">
+    <div class="row align-items-center">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <h4><i class="bi bi-person-circle me-2"></i>Welcome, @Model.FullName!</h4>
+            <p>Membership since @Model.MembershipDate.ToString("MMMM yyyy")</p>
+        </div>
+        <div class="col-md-6">
+            <div class="row g-2">
+                <div class="col-4">
+                    <div class="member-hero-stat">
+                        <span class="num">@activeBorrows.Count</span>
+                        <span class="lbl">Borrowed</span>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="member-hero-stat">
+                        <span class="num">@pendingReservations.Count</span>
+                        <span class="lbl">Reserved</span>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="member-hero-stat">
+                        <span class="num">$@outstandingFines.ToString("F0")</span>
+                        <span class="lbl">Fines</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (overdueCount > 0)
+{
+    <div class="alert alert-danger mb-4">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        You have <strong>@overdueCount overdue book(s)</strong>. Please return them to avoid additional fines.
+        <a href="/Member/MyBorrows" class="alert-link ms-2">View borrows →</a>
+    </div>
+}
+
+@if (outstandingFines > 0)
+{
+    <div class="alert alert-warning mb-4">
+        <i class="bi bi-currency-dollar me-2"></i>
+        You have outstanding fines of <strong>$@outstandingFines.ToString("F2")</strong>.
+        <a href="/Member/MyPenalties" class="alert-link ms-2">View penalties →</a>
+    </div>
+}
+
+<!-- Quick Links -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <a href="/Member/Browse" class="text-decoration-none">
+            <div class="stat-card text-center" style="border-top-color:var(--nepal-blue)">
+                <i class="bi bi-search fs-2 mb-1" style="color:var(--nepal-blue)"></i>
+                <div class="stat-label">Browse Books</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="/Member/MyBorrows" class="text-decoration-none">
+            <div class="stat-card text-center" style="border-top-color:#198754">
+                <i class="bi bi-book fs-2 mb-1 text-success"></i>
+                <div class="stat-label">My Borrows</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="/Member/MyReservations" class="text-decoration-none">
+            <div class="stat-card text-center" style="border-top-color:#ffc107">
+                <i class="bi bi-bookmark fs-2 mb-1 text-warning"></i>
+                <div class="stat-label">Reservations</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="/Member/MyPenalties" class="text-decoration-none">
+            <div class="stat-card text-center" style="border-top-color:var(--nepal-red)">
+                <i class="bi bi-currency-dollar fs-2 mb-1 text-danger"></i>
+                <div class="stat-label">Penalties</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Book Catalogue -->
+<div class="d-flex justify-content-between align-items-center section-header mb-3">
+    <span><i class="bi bi-collection me-2"></i>Browse Books</span>
+    <a href="/Member/Browse" class="text-decoration-none" style="font-size:0.8rem">View all →</a>
+</div>
+<div class="row g-3 mb-4">
+    @foreach (var book in books)
+    {
+        var color = bookColors[ci % bookColors.Length];
+        ci++;
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="book-card">
+                @if (!string.IsNullOrEmpty(book.CoverImagePath))
+                {
+                    <img src="@book.CoverImagePath" class="book-cover" alt="@book.Title" />
+                }
+                else
+                {
+                    <div class="book-cover-placeholder" style="background:@color">
+                        <i class="bi bi-book"></i>
+                    </div>
+                }
+                <div class="book-card-body">
+                    <h6 title="@book.Title">@book.Title</h6>
+                    <small class="text-muted d-block text-truncate">@book.Author</small>
+                    <div class="mt-2">
+                        @if (book.AvailableCopies > 0)
+                        {
+                            <form method="post" action="/Member/Borrow">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="bookId" value="@book.Id" />
+                                <button type="submit" class="btn btn-sm btn-nepal-blue w-100" style="font-size:0.75rem">
+                                    <i class="bi bi-book me-1"></i>Borrow
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" action="/Member/Reserve">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="bookId" value="@book.Id" />
+                                <button type="submit" class="btn btn-sm btn-nepal-red w-100" style="font-size:0.75rem">
+                                    <i class="bi bi-bookmark me-1"></i>Reserve
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Current Borrows -->
+@if (activeBorrows.Any())
+{
+    <div class="section-header mb-3"><i class="bi bi-book me-2"></i>My Current Borrows</div>
+    <div class="bg-white rounded shadow-sm mb-4">
+        <table class="table table-hover mb-0 lib-table">
+            <thead>
+                <tr><th>Book</th><th>Author</th><th>Borrow Date</th><th>Due Date</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var bt in activeBorrows.OrderBy(x => x.DueDate))
+                {
+                    var isOverdue = bt.DueDate < DateTime.Today;
+                    <tr class="@(isOverdue ? "overdue-row" : "")">
+                        <td class="small fw-semibold">@(bt.Book?.Title ?? "—")</td>
+                        <td class="small">@(bt.Book?.Author ?? "—")</td>
+                        <td class="small">@bt.BorrowDate.ToString("dd MMM yyyy")</td>
+                        <td class="small @(isOverdue ? "text-danger fw-bold" : "")">@bt.DueDate.ToString("dd MMM yyyy")</td>
+                        <td>
+                            @if (isOverdue)
+                            {
+                                <span class="badge badge-overdue">Overdue</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-active">Active</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

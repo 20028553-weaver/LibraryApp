@@ -1,44 +1,98 @@
 @model LibraryApp.Models.Book
 @{
-    ViewData["Title"] = "Add Book";
+    ViewData["Title"] = "Add New Book";
 }
 
-<h2 class="mb-4">Add New Book</h2>
-<div class="card p-4" style="max-width:600px;">
-    <form method="post" action="/Books/Create">
-        @Html.AntiForgeryToken()
-        <div class="mb-3">
-            <label asp-for="Title" class="form-label">Title *</label>
-            <input asp-for="Title" class="form-control" />
-            <span asp-validation-for="Title" class="text-danger"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="Author" class="form-label">Author *</label>
-            <input asp-for="Author" class="form-control" />
-            <span asp-validation-for="Author" class="text-danger"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="ISBN" class="form-label">ISBN *</label>
-            <input asp-for="ISBN" class="form-control" />
-            <span asp-validation-for="ISBN" class="text-danger"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="Publisher" class="form-label">Publisher</label>
-            <input asp-for="Publisher" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="YearPublished" class="form-label">Year Published</label>
-            <input asp-for="YearPublished" type="number" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="TotalCopies" class="form-label">Total Copies</label>
-            <input asp-for="TotalCopies" type="number" value="1" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="Description" class="form-label">Description</label>
-            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Book</button>
-        <a href="/Books" class="btn btn-secondary ms-2">Cancel</a>
-    </form>
+<div class="page-header">
+    <h2><i class="bi bi-plus-circle me-2"></i>Add New Book</h2>
+    <a href="/Books" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
 </div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="settings-card">
+            <form method="post" action="/Books/Create" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Title" class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                        <input asp-for="Title" class="form-control" placeholder="Book title" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Author" class="form-label fw-semibold">Author <span class="text-danger">*</span></label>
+                        <input asp-for="Author" class="form-control" placeholder="Author name" />
+                        <span asp-validation-for="Author" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ISBN" class="form-label fw-semibold">ISBN <span class="text-danger">*</span></label>
+                        <input asp-for="ISBN" class="form-control" placeholder="10–13 digits" />
+                        <span asp-validation-for="ISBN" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Publisher" class="form-label fw-semibold">Publisher</label>
+                        <input asp-for="Publisher" class="form-control" placeholder="Publisher name" />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="YearPublished" class="form-label fw-semibold">Year</label>
+                        <input asp-for="YearPublished" type="number" class="form-control" placeholder="e.g. 2023" />
+                        <span asp-validation-for="YearPublished" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="TotalCopies" class="form-label fw-semibold">Copies <span class="text-danger">*</span></label>
+                        <input asp-for="TotalCopies" type="number" class="form-control" value="1" min="1" />
+                        <span asp-validation-for="TotalCopies" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Brief description of the book"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Cover Image</label>
+                        <input type="file" name="coverImage" class="form-control" accept="image/*"
+                               onchange="previewCover(this)" />
+                        <div class="mt-2" id="previewContainer" style="display:none">
+                            <img id="coverPreview" src="#" alt="Preview" />
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-nepal-blue px-4">
+                        <i class="bi bi-save me-2"></i>Save Book
+                    </button>
+                    <a href="/Books" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="settings-card text-center">
+            <div id="previewBox">
+                <div style="height:180px;background:#e9ecef;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:3rem;">
+                    <i class="bi bi-image"></i>
+                </div>
+                <p class="text-muted small mt-2">Select an image to preview cover</p>
+            </div>
+            <div id="previewFull" style="display:none">
+                <img id="coverPreviewFull" src="#" alt="Cover Preview" style="max-height:250px;max-width:100%;border-radius:6px;object-fit:contain;" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function previewCover(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewFull').style.display = 'block';
+                    document.getElementById('previewBox').style.display = 'none';
+                    document.getElementById('coverPreviewFull').setAttribute('src', e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}

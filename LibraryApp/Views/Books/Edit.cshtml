@@ -3,48 +3,119 @@
     ViewData["Title"] = "Edit Book";
 }
 
-<h2 class="mb-4">Edit: @Model.Title</h2>
-<div class="card p-4" style="max-width:600px;">
-    <form method="post" action="/Books/Edit/@Model.Id">
-        @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="Id" />
-        <div class="mb-3">
-            <label asp-for="Title" class="form-label">Title *</label>
-            <input asp-for="Title" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="Author" class="form-label">Author *</label>
-            <input asp-for="Author" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="ISBN" class="form-label">ISBN *</label>
-            <input asp-for="ISBN" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="Publisher" class="form-label">Publisher</label>
-            <input asp-for="Publisher" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="YearPublished" class="form-label">Year</label>
-            <input asp-for="YearPublished" type="number" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="TotalCopies" class="form-label">Total Copies</label>
-            <input asp-for="TotalCopies" type="number" class="form-control" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="AvailableCopies" class="form-label">Available Copies</label>
-            <input asp-for="AvailableCopies" type="number" class="form-control" />
-        </div>
-        <div class="mb-3 form-check">
-            <input asp-for="IsAvailable" type="checkbox" class="form-check-input" />
-            <label asp-for="IsAvailable" class="form-check-label">Is Available</label>
-        </div>
-        <div class="mb-3">
-            <label asp-for="Description" class="form-label">Description</label>
-            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="/Books/Details/@Model.Id" class="btn btn-secondary ms-2">Cancel</a>
-    </form>
+<div class="page-header">
+    <h2><i class="bi bi-pencil me-2"></i>Edit Book</h2>
+    <a href="/Books" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
 </div>
+
+<div class="row">
+    <div class="col-lg-7">
+        <div class="settings-card">
+            <form method="post" action="/Books/Edit/@Model.Id" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="CoverImagePath" />
+                <input type="hidden" asp-for="DateAdded" />
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Title" class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Author" class="form-label fw-semibold">Author <span class="text-danger">*</span></label>
+                        <input asp-for="Author" class="form-control" />
+                        <span asp-validation-for="Author" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ISBN" class="form-label fw-semibold">ISBN <span class="text-danger">*</span></label>
+                        <input asp-for="ISBN" class="form-control" />
+                        <span asp-validation-for="ISBN" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Publisher" class="form-label fw-semibold">Publisher</label>
+                        <input asp-for="Publisher" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="YearPublished" class="form-label fw-semibold">Year</label>
+                        <input asp-for="YearPublished" type="number" class="form-control" />
+                        <span asp-validation-for="YearPublished" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="TotalCopies" class="form-label fw-semibold">Total Copies</label>
+                        <input asp-for="TotalCopies" type="number" class="form-control" min="1" />
+                        <span asp-validation-for="TotalCopies" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label asp-for="AvailableCopies" class="form-label fw-semibold">Available</label>
+                        <input asp-for="AvailableCopies" type="number" class="form-control" min="0" />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input asp-for="IsAvailable" type="checkbox" class="form-check-input" />
+                            <label asp-for="IsAvailable" class="form-check-label fw-semibold">Is Available</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Replace Cover Image</label>
+                        <input type="file" name="coverImage" class="form-control" accept="image/*"
+                               onchange="previewNewCover(this)" />
+                        <small class="text-muted">Leave blank to keep current cover.</small>
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-nepal-blue px-4">
+                        <i class="bi bi-save me-2"></i>Save Changes
+                    </button>
+                    <a href="/Books" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="settings-card text-center">
+            <p class="fw-semibold text-muted small mb-2">Current Cover</p>
+            <div id="currentCover">
+                @if (!string.IsNullOrEmpty(Model.CoverImagePath))
+                {
+                    <img src="@Model.CoverImagePath" id="coverPreviewFull"
+                         style="max-height:250px;max-width:100%;border-radius:6px;object-fit:contain;" alt="Cover" />
+                }
+                else
+                {
+                    <div style="height:180px;background:#e9ecef;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:3rem;">
+                        <i class="bi bi-image"></i>
+                    </div>
+                    <p class="text-muted small mt-2">No cover uploaded</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        function previewNewCover(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var preview = document.getElementById('coverPreviewFull');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.id = 'coverPreviewFull';
+                        preview.style = 'max-height:250px;max-width:100%;border-radius:6px;object-fit:contain;';
+                        document.getElementById('currentCover').innerHTML = '';
+                        document.getElementById('currentCover').appendChild(preview);
+                    }
+                    preview.setAttribute('src', e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}

@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using LibraryApp.Data;
 using LibraryApp.Models;
@@ -25,22 +20,66 @@ namespace LibraryApp.Controllers
             return View(await _context.LibraryProfiles.ToListAsync());
         }
 
+        // GET: LibraryProfiles/Edit — loads first or creates default, combined settings page
+        public async Task<IActionResult> Edit(int? id = null)
+        {
+            LibraryProfile? profile;
+            if (id == null)
+            {
+                profile = await _context.LibraryProfiles.FirstOrDefaultAsync();
+                if (profile == null)
+                {
+                    profile = new LibraryProfile
+                    {
+                        Name = "Nepal Public Library",
+                        Location = "Kathmandu, Nepal"
+                    };
+                    _context.LibraryProfiles.Add(profile);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                profile = await _context.LibraryProfiles.FindAsync(id);
+                if (profile == null) return NotFound();
+            }
+
+            ViewBag.Config = await _context.BorrowingConfigs.FirstOrDefaultAsync();
+            return View(profile);
+        }
+
+        // POST: LibraryProfiles/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Location,Hours,ContactNumber,Email,Website,Description")] LibraryProfile formProfile)
+        {
+            if (id != formProfile.Id) return NotFound();
+            if (ModelState.IsValid)
+            {
+                var existing = await _context.LibraryProfiles.FindAsync(id);
+                if (existing == null) return NotFound();
+                existing.Name = formProfile.Name;
+                existing.Location = formProfile.Location;
+                existing.Hours = formProfile.Hours;
+                existing.ContactNumber = formProfile.ContactNumber;
+                existing.Email = formProfile.Email;
+                existing.Website = formProfile.Website;
+                existing.Description = formProfile.Description;
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "Library profile saved.";
+                return RedirectToAction(nameof(Edit));
+            }
+            ViewBag.Config = await _context.BorrowingConfigs.FirstOrDefaultAsync();
+            return View(formProfile);
+        }
+
         // GET: LibraryProfiles/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var libraryProfile = await _context.LibraryProfiles
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (libraryProfile == null)
-            {
-                return NotFound();
-            }
-
-            return View(libraryProfile);
+            if (id == null) return NotFound();
+            var profile = await _context.LibraryProfiles.FirstOrDefaultAsync(m => m.Id == id);
+            if (profile == null) return NotFound();
+            return View(profile);
         }
 
         // GET: LibraryProfiles/Create
@@ -50,88 +89,26 @@ namespace LibraryApp.Controllers
         }
 
         // POST: LibraryProfiles/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Location,Hours,ContactNumber,Email,Website,Description,LogoPath")] LibraryProfile libraryProfile)
+        public async Task<IActionResult> Create([Bind("Id,Name,Location,Hours,ContactNumber,Email,Website,Description,LogoPath")] LibraryProfile profile)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(libraryProfile);
+                _context.Add(profile);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Edit));
             }
-            return View(libraryProfile);
-        }
-
-        // GET: LibraryProfiles/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var libraryProfile = await _context.LibraryProfiles.FindAsync(id);
-            if (libraryProfile == null)
-            {
-                return NotFound();
-            }
-            return View(libraryProfile);
-        }
-
-        // POST: LibraryProfiles/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Location,Hours,ContactNumber,Email,Website,Description,LogoPath")] LibraryProfile libraryProfile)
-        {
-            if (id != libraryProfile.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(libraryProfile);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!LibraryProfileExists(libraryProfile.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(libraryProfile);
+            return View(profile);
         }
 
         // GET: LibraryProfiles/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var libraryProfile = await _context.LibraryProfiles
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (libraryProfile == null)
-            {
-                return NotFound();
-            }
-
-            return View(libraryProfile);
+            if (id == null) return NotFound();
+            var profile = await _context.LibraryProfiles.FirstOrDefaultAsync(m => m.Id == id);
+            if (profile == null) return NotFound();
+            return View(profile);
         }
 
         // POST: LibraryProfiles/Delete/5
@@ -139,19 +116,10 @@ namespace LibraryApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var libraryProfile = await _context.LibraryProfiles.FindAsync(id);
-            if (libraryProfile != null)
-            {
-                _context.LibraryProfiles.Remove(libraryProfile);
-            }
-
+            var profile = await _context.LibraryProfiles.FindAsync(id);
+            if (profile != null) _context.LibraryProfiles.Remove(profile);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool LibraryProfileExists(int id)
-        {
-            return _context.LibraryProfiles.Any(e => e.Id == id);
         }
     }
 }
