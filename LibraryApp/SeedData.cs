@@ -15,6 +15,22 @@ namespace LibraryApp
 
         public static void Initialize(LibraryDbContext context)
         {
+            // Always ensure admin has a working password (handles pre-existing empty hashes)
+            var existingAdmin = context.Admins.FirstOrDefault();
+            if (existingAdmin != null && string.IsNullOrEmpty(existingAdmin.PasswordHash))
+            {
+                existingAdmin.PasswordHash = HashPassword("admin123");
+                context.SaveChanges();
+            }
+
+            // Always ensure seeded members have a working password
+            foreach (var m in context.Members.Where(m => string.IsNullOrEmpty(m.PasswordHash)))
+            {
+                m.PasswordHash = HashPassword("member123");
+            }
+            if (context.ChangeTracker.HasChanges())
+                context.SaveChanges();
+
             if (!context.BorrowingConfigs.Any())
             {
                 context.BorrowingConfigs.Add(new BorrowingConfig

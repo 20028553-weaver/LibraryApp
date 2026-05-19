@@ -8,31 +8,38 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<LibraryDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddSession();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
+// Apply migrations and seed data before handling requests
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<LibraryDbContext>();
+    context.Database.Migrate();
+    LibraryApp.SeedData.Initialize(context);
+}
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseSession();
 
-app.UseAuthorization();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider
-        .GetRequiredService<LibraryDbContext>();
-    LibraryApp.SeedData.Initialize(context);
-}
+// Auth guard: block unauthenticated access except for login/logout/register
 app.Use(async (context, next) =>
 {
-    var publicPaths = new[] { "/Account/Login", "/Account/Logout" };
+    var publicPaths = new[] { "/Account/Login", "/Account/Logout", "/Account/Register" };
     bool isPublic = publicPaths.Any(p =>
         context.Request.Path.StartsWithSegments(p));
 
@@ -44,4 +51,11 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Account}/{action=Login}/{id?}");
+
 app.Run();
