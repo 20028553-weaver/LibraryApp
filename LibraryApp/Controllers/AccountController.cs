@@ -56,5 +56,53 @@ namespace LibraryApp.Controllers
             TempData["Success"] = "Logged out successfully.";
             return RedirectToAction("Login");
         }
+        // GET: /Account/Register
+        public IActionResult Register()
+        {
+            ViewBag.ShowRegister = true;
+            return View("Login");
+        }
+
+        // POST: /Account/Register
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(
+            string fullName, string email,
+            string phone, string password)
+        {
+            // Check if email already exists
+            bool emailExists = await _context.Members
+                .AnyAsync(m => m.Email == email);
+
+            if (emailExists)
+            {
+                TempData["Error"] = "An account with this email already exists.";
+                ViewBag.ShowRegister = true;
+                return View("Login");
+            }
+
+            // Create new member account
+            var newMember = new Member
+            {
+                FullName = fullName,
+                Email = email,
+                Phone = phone,
+                Address = "",
+                MembershipDate = DateTime.Now,
+                MembershipExpiry = DateTime.Now.AddYears(1),
+                Status = "Active"
+            };
+
+            _context.Members.Add(newMember);
+            await _context.SaveChangesAsync();
+
+            // Auto login after registration
+            HttpContext.Session.SetString("UserEmail", email);
+            HttpContext.Session.SetString("UserRole", "Member");
+            HttpContext.Session.SetInt32("MemberId", newMember.Id);
+
+            TempData["Success"] = $"Welcome {fullName}! Your account has been created.";
+            return RedirectToAction("Index", "Home");
+        }
     }
 }

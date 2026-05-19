@@ -1,42 +1,93 @@
 ﻿@{
     ViewData["Title"] = "Login";
+    Layout = "_Layout";
 }
 
 <div class="row justify-content-center mt-5">
     <div class="col-md-4">
-        <div class="card p-4">
-            <h3 class="text-center mb-4">
-                <i class="bi bi-book-half"></i> LibraryApp
-            </h3>
-            <form method="post" action="/Account/Login">
-                @Html.AntiForgeryToken()
-                <div class="mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="email" name="email"
-                           class="form-control"
-                           placeholder="Enter your email" required />
+
+        @if (ViewBag.ShowRegister == true)
+        {
+            <div class="card p-4">
+                <h3 class="text-center mb-4">
+                    <i class="bi bi-person-plus"></i> Create Account
+                </h3>
+                <form method="post" action="/Account/Register">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="fullName"
+                               class="form-control"
+                               placeholder="Enter your full name" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email"
+                               class="form-control"
+                               placeholder="Enter your email" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone</label>
+                        <input type="text" name="phone"
+                               class="form-control"
+                               placeholder="Enter your phone number" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password"
+                               class="form-control"
+                               placeholder="Create a password" required />
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-person-check"></i> Create Account
+                    </button>
+                </form>
+                <hr />
+                <div class="text-center">
+                    <a href="/Account/Login" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left"></i> Back to Login
+                    </a>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password"
-                           class="form-control"
-                           placeholder="Enter your password" required />
-                </div>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-box-arrow-in-right"></i> Login
-                </button>
-            </form>
-            <hr />
-            <div class="text-center small text-muted">
-                <p>
-                    <strong>Admin login:</strong><br />
-                    admin@library.com / admin123
-                </p>
-                <p>
-                    <strong>Member login:</strong><br />
-                    john@email.com / member123
-                </p>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="card p-4">
+                <h3 class="text-center mb-4">
+                    <i class="bi bi-book-half"></i> LibraryApp
+                </h3>
+                <form method="post" action="/Account/Login">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email"
+                               class="form-control"
+                               placeholder="Enter your email" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password"
+                               class="form-control"
+                               placeholder="Enter your password" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </button>
+                </form>
+                <hr />
+                <div class="text-center">
+                    <a href="/Account/Register"
+                           class="btn btn-outline-success w-100">
+                        <i class="bi bi-person-plus"></i> Create New Account
+                    </a>
+                </div>
+                <hr />
+                <div class="text-center small text-muted">
+                    <p><strong>Admin:</strong> admin@library.com / admin123</p>
+                    <p><strong>Member:</strong> john@email.com / member123</p>
+                </div>
+            </div>
+        }
+
     </div>
 </div>

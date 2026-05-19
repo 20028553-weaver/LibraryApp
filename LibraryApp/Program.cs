@@ -30,4 +30,18 @@ using (var scope = app.Services.CreateScope())
         .GetRequiredService<LibraryDbContext>();
     LibraryApp.SeedData.Initialize(context);
 }
+app.Use(async (context, next) =>
+{
+    var publicPaths = new[] { "/Account/Login", "/Account/Logout" };
+    bool isPublic = publicPaths.Any(p =>
+        context.Request.Path.StartsWithSegments(p));
+
+    if (!isPublic && context.Session.GetString("UserEmail") == null)
+    {
+        context.Response.Redirect("/Account/Login");
+        return;
+    }
+
+    await next();
+});
 app.Run();
